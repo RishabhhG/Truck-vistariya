@@ -37,6 +37,9 @@ import {
   User,
   Search,
   Menu,
+  Fuel,
+  CircleGauge,
+  Pen,
 } from "lucide-react";
 import {
   Carousel,
@@ -55,7 +58,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Sidebar } from "./Sidebar"; 
+import { Sidebar } from "./Sidebar";
 // Mock data for trucks with additional details
 const onWayTrucks = [
   {
@@ -130,6 +133,8 @@ const allTrucks = [
     capacity: "80,000 lbs",
     mileage: "150,000 miles",
     status: "Available",
+    fuel : "Petrol",
+    mileage : "30 kmpl",
   },
   {
     id: 2,
@@ -140,6 +145,8 @@ const allTrucks = [
     capacity: "70,000 lbs",
     mileage: "120,000 miles",
     status: "In Transit",
+    fuel : "Petrol",
+    mileage : "30 kmpl",
   },
   {
     id: 3,
@@ -150,6 +157,8 @@ const allTrucks = [
     capacity: "75,000 lbs",
     mileage: "180,000 miles",
     status: "Maintenance",
+    fuel : "Electic",
+    mileage : "50 kmpl",
   },
   {
     id: 4,
@@ -160,6 +169,8 @@ const allTrucks = [
     capacity: "85,000 lbs",
     mileage: "100,000 miles",
     status: "Available",
+    fuel : "Diesel",
+    mileage : "60 kmpl",
   },
 ];
 
@@ -191,18 +202,17 @@ export function TruckDashboard() {
         setIsSidebarOpen={setIsSidebarOpen}
       />
       <div className="flex-1 p-4 md:p-6 bg-gradient-to-br from-gray-100 to-gray-200 min-h-screen">
-      <Button
-            className="lg:hidden"
-            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-          >
-            <Menu className="h-6 w-6" />
-          </Button>
-          
+        <Button
+          className="lg:hidden"
+          onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+        >
+          <Menu className="h-6 w-6" />
+        </Button>
 
         <h1 className="text-2xl md:text-4xl font-bold mb-4 md:mb-6 text-gray-800 mt-4">
           Transport Management Dashboard
         </h1>
-        
+
         <Tabs defaultValue="onway" className="w-full">
           <TabsList className="mb-4 bg-white shadow-md rounded-lg gap-5 flex-wrap">
             <TabsTrigger
@@ -218,72 +228,114 @@ export function TruckDashboard() {
               All Trucks
             </TabsTrigger>
           </TabsList>
-          
+
           <Dialog>
-  <div className="flex justify-end relative right-28 items-center mb-4 mt-5 ">
-    <DialogTrigger asChild>
-      <Button className="bg-black hover:bg-gray-800 text-white">
-        <Plus className="mr-2 h-4 w-4" /> Add New Truck
-      </Button>
-    </DialogTrigger>
-  </div>
-  
-  <DialogContent className="sm:max-w-[425px]">
-    <DialogHeader>
-      <DialogTitle>Add New Truck</DialogTitle>
-      <DialogDescription>
-        Enter the details for the new truck here. Click save when you're done.
-      </DialogDescription>
-    </DialogHeader>
-    
-    <form className="grid gap-4 py-4">
-      <div className="grid grid-cols-4 items-center gap-4">
-        <Label htmlFor="name" className="text-right">
-          Name
-        </Label>
-        <Input id="name" className="col-span-3" />
-      </div>
+            <div className="flex justify-end relative right-28 items-center mb-4 mt-5 ">
+              <DialogTrigger asChild>
+                <Button className="bg-black hover:bg-gray-800 text-white">
+                  <Plus className="mr-2 h-4 w-4" /> Add New Truck
+                </Button>
+              </DialogTrigger>
+            </div>
 
-      <div className="grid grid-cols-4 items-center gap-4">
-        <Label htmlFor="model" className="text-right">
-          Model
-        </Label>
-        <Input id="model" className="col-span-3" />
-      </div>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Add New Truck</DialogTitle>
+                <DialogDescription>
+                  
+                  Enter the details for the new truck here. Click save when
+                  you're done.
+                </DialogDescription>
+              </DialogHeader>
 
-      <div className="grid grid-cols-4 items-center gap-4">
-        <Label htmlFor="capacity" className="text-right">
-          Capacity
-        </Label>
-        <Input id="capacity" className="col-span-3" />
-      </div>
+              <form className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="name" className="text-right">
+                    Name
+                  </Label>
+                  <Input id="name" className="col-span-3" placeholder = "Truck Number" />
+                </div>
 
-      <div className="grid grid-cols-4 items-center gap-4">
-        <Label htmlFor="status" className="text-right">
-          Status
-        </Label>
-        <Select>
-          <SelectTrigger className="col-span-3">
-            <SelectValue placeholder="Select status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="available">Available</SelectItem>
-            <SelectItem value="intransit">In Transit</SelectItem>
-            <SelectItem value="maintenance">Maintenance</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="model" className="text-right">
+                    Model
+                  </Label>
+                  <Input id="model" className="col-span-3" placeholder = "Truck Model"/>
+                </div>
 
-      <Button
-        type="submit"
-        className="bg-blue-500 hover:bg-blue-600 text-white"
-      >
-        Save Truck
-      </Button>
-    </form>
-  </DialogContent>
-</Dialog>
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="capacity" className="text-right">
+                    Capacity
+                  </Label>
+                  <Input id="capacity" className="col-span-3" placeholder = "Truck Capacity"/>
+                </div>
 
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="status" className="text-right">
+                    Fuel Type
+                  </Label>
+                  <Select>
+                    <SelectTrigger className="col-span-3">
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="available">petrol</SelectItem>
+                      <SelectItem value="intransit">Diesel</SelectItem>
+                      <SelectItem value="maintenance">Electric</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="capacity" className="text-right">
+                    Mileage
+                  </Label>
+                  <Input id="capacity" className="col-span-3" placeholder = "Truck Mileage"/>
+                </div>
+
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="serviceDate" className="text-right">
+                    Last service date
+                  </Label>
+                  <Input
+                    id="serviceDate"
+                    type="date" // This will render a date picker (calendar) in most browsers
+                    className="col-span-3"
+                  />
+                </div>
+
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="capacity" className="text-right">
+                    insurance Details
+                  </Label>
+                  <Input id="capacity" className="col-span-3" placeholder = "Policy number"/>
+                </div>
+
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="status" className="text-right">
+                    Status
+                  </Label>
+                  <Select>
+                    <SelectTrigger className="col-span-3">
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="available">Available</SelectItem>
+                      <SelectItem value="intransit">In Transit</SelectItem>
+                      <SelectItem value="maintenance">Maintenance</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <Button
+                  type="submit"
+                  className="bg-blue-500 hover:bg-blue-600 text-white"
+                >
+                  Save Truck
+                </Button>
+              </form>
+            </DialogContent>
+          </Dialog>
 
           <TabsContent value="onway">
             <Carousel className="w-full max-w-5xl mx-auto mt-5">
@@ -301,7 +353,9 @@ export function TruckDashboard() {
                         </CardTitle>
                         <CardDescription>
                           <Badge
-                            className={`${statusColors[truck.status]} text-white mt-2`}
+                            className={`${
+                              statusColors[truck.status]
+                            } text-white mt-2`}
                           >
                             {truck.status}
                           </Badge>
@@ -331,26 +385,36 @@ export function TruckDashboard() {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                                   <div className="flex items-center">
                                     <MapPin className="mr-2 text-green-500 h-4 w-4" />
-                                    <div className="font-bold">Destination:</div> {truck.destination}
+                                    <div className="font-bold">
+                                      Destination:
+                                    </div>{" "}
+                                    {truck.destination}
                                   </div>
                                   <div className="flex items-center">
                                     <Clock className="mr-2 text-purple-500 h-4 w-4" />
-                                    <div className="font-bold">Time:</div> {truck.startTime} - {truck.endTime}
+                                    <div className="font-bold">Time:</div>{" "}
+                                    {truck.startTime} - {truck.endTime}
                                   </div>
                                   <div className="flex items-center">
                                     <User className="mr-2 text-blue-500 h-4 w-4" />
-                                    <div className="font-bold">Driver:</div> {truck.driver}
+                                    <div className="font-bold">Driver:</div>{" "}
+                                    {truck.driver}
                                   </div>
                                   <div className="flex items-center">
                                     <Package className="mr-2 text-yellow-500 h-4 w-4" />
-                                    <div className="font-bold">Cargo:</div> {truck.cargo}
+                                    <div className="font-bold">Cargo:</div>{" "}
+                                    {truck.cargo}
                                   </div>
                                   <div className="flex items-center col-span-full">
                                     <Calendar className="mr-2 text-indigo-500 h-4 w-4" />
                                     Expected Delivery: {truck.expectedDelivery}
                                   </div>
                                   <div className="flex items-center col-span-full">
-                                    <Badge className={`${statusColors[truck.status]} text-white`}>
+                                    <Badge
+                                      className={`${
+                                        statusColors[truck.status]
+                                      } text-white`}
+                                    >
                                       {truck.status}
                                     </Badge>
                                   </div>
@@ -387,20 +451,36 @@ export function TruckDashboard() {
                 <TableHeader>
                   <TableRow className="bg-gray-100">
                     <TableHead className="text-left px-4 py-2">Name</TableHead>
-                    <TableHead className="text-left px-4 py-2 hidden md:table-cell">Model</TableHead>
-                    <TableHead className="text-left px-4 py-2 hidden lg:table-cell">Capacity</TableHead>
-                    <TableHead className="text-left px-4 py-2">Status</TableHead>
-                    <TableHead className="text-left px-4 py-2">Actions</TableHead>
+                    <TableHead className="text-left px-4 py-2 hidden md:table-cell">
+                      Model
+                    </TableHead>
+                    <TableHead className="text-left px-4 py-2 hidden lg:table-cell">
+                      Capacity
+                    </TableHead>
+                    <TableHead className="text-left px-4 py-2">
+                      Status
+                    </TableHead>
+                    <TableHead className="text-left px-4 py-2">
+                      Actions
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredTrucks.map((truck) => (
                     <TableRow key={truck.id} className="hover:bg-gray-50">
-                      <TableCell className="font-medium px-4 py-2 text-left">{truck.name}</TableCell>
-                      <TableCell className="px-4 py-2 text-left hidden md:table-cell">{truck.model}</TableCell>
-                      <TableCell className="px-4 py-2 text-left hidden lg:table-cell">{truck.capacity}</TableCell>
+                      <TableCell className="font-medium px-4 py-2 text-left">
+                        {truck.name}
+                      </TableCell>
+                      <TableCell className="px-4 py-2 text-left hidden md:table-cell">
+                        {truck.model}
+                      </TableCell>
+                      <TableCell className="px-4 py-2 text-left hidden lg:table-cell">
+                        {truck.capacity}
+                      </TableCell>
                       <TableCell className="px-4 py-2 text-left">
-                        <Badge className={`${statusColors[truck.status]} text-white`}>
+                        <Badge
+                          className={`${statusColors[truck.status]} text-white`}
+                        >
                           {truck.status}
                         </Badge>
                       </TableCell>
@@ -433,24 +513,36 @@ export function TruckDashboard() {
                 </DialogTitle>
                 <DialogDescription>
                   <div className="grid grid-cols-2 gap-4 mt-4">
-                    <div className="flex items-center">
+                    <div className="flex items-center mt-2">
                       <Wrench className="mr-2 text-yellow-500" /> Last
                       Maintenance: {selectedTruck.lastMaintenance}
                     </div>
-                    <div className="flex items-center">
+                    <div className="flex items-center mt-2">
                       <Calendar className="mr-2 text-green-500" /> Next
                       Maintenance: {selectedTruck.nextMaintenance}
                     </div>
-                    <div className="flex items-center">
+                    <div className="flex items-center mt-2" >
                       <Truck className="mr-2 text-blue-500" /> Model:{" "}
                       {selectedTruck.model}
                     </div>
-                    <div className="flex items-center">
+                    <div className="flex items-center mt-2">
                       <Package className="mr-2 text-purple-500" /> Capacity:{" "}
                       {selectedTruck.capacity}
                     </div>
 
-                    <div className="flex items-center font-bold text-black">
+                    <div className="flex items-center mt-2">
+                      <Fuel className="mr-2 text-yellow-800" /> Fuel Type:{" "}
+                      {selectedTruck.fuel}
+                    </div>
+
+                    <div className="flex items-center mt-2">
+                      <CircleGauge className="mr-2 text-red-600" /> Mileage:{" "}
+                      {selectedTruck.mileage}
+                    </div>
+
+
+
+                    <div className="flex items-center font-bold text-black ">
                       Status:{" "}
                       <Badge
                         className={`${
@@ -460,6 +552,69 @@ export function TruckDashboard() {
                         {selectedTruck.status}
                       </Badge>
                     </div>
+
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button className="bg-black hover:bg-gray-800 text-white mt-1">
+                          <Pen className="mr-3 h-4 w-4" /> Update Truck
+                        </Button>
+                      </DialogTrigger>
+
+                      <DialogContent className="sm:max-w-[425px]">
+                        <DialogHeader>
+                          <DialogTitle>Update Truck</DialogTitle>
+                          <DialogDescription>
+                            Enter the details you want to update. Click save
+                            when you're done.
+                          </DialogDescription>
+                        </DialogHeader>
+
+                        <form className="grid gap-4 py-4">
+                          <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="model" className="text-right">
+                              Model
+                            </Label>
+                            <Input id="model" className="col-span-3" />
+                          </div>
+
+                          <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="capacity" className="text-right">
+                              Capacity
+                            </Label>
+                            <Input id="capacity" className="col-span-3" />
+                          </div>
+
+                          <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="status" className="text-right">
+                              Status
+                            </Label>
+                            <Select>
+                              <SelectTrigger className="col-span-3">
+                                <SelectValue placeholder="Select status" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="available">
+                                  Available
+                                </SelectItem>
+                                <SelectItem value="intransit">
+                                  In Transit
+                                </SelectItem>
+                                <SelectItem value="maintenance">
+                                  Maintenance
+                                </SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <Button
+                            type="submit"
+                            className="bg-blue-500 hover:bg-blue-600 text-white"
+                          >
+                            Save Truck
+                          </Button>
+                        </form>
+                      </DialogContent>
+                    </Dialog>
                   </div>
                 </DialogDescription>
               </DialogHeader>
