@@ -1,6 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import axios from "axios";
+import { apiClient } from "@/lib/api-client";
+import { CREATE_DRIVER } from "@/utils/constant";
 import {
   Search,
   Filter,
@@ -11,13 +14,15 @@ import {
   Calendar,
   MapPin,
   Menu,
-  TicketSlash ,
+  TicketSlash,
   CalendarDays,
   Pen,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Toaster, toast } from "react-hot-toast";
+
 import {
   Select,
   SelectContent,
@@ -62,7 +67,7 @@ const drivers = [
     image: "/placeholder.svg?height=40&width=40",
     tripsCompleted: 120,
     onTimeRate: 98,
-    Phone : "+91 674834937"
+    Phone: "+91 674834937",
   },
   {
     id: 2,
@@ -74,8 +79,7 @@ const drivers = [
     image: "/placeholder.svg?height=40&width=40",
     tripsCompleted: 85,
     onTimeRate: 95,
-    Phone : "+91 6746864937"
-
+    Phone: "+91 6746864937",
   },
   {
     id: 3,
@@ -87,7 +91,7 @@ const drivers = [
     image: "/placeholder.svg?height=40&width=40",
     tripsCompleted: 200,
     onTimeRate: 99,
-    Phone : "+91 67483434937"
+    Phone: "+91 67483434937",
   },
   {
     id: 4,
@@ -99,7 +103,7 @@ const drivers = [
     image: "/placeholder.svg?height=40&width=40",
     tripsCompleted: 50,
     onTimeRate: 92,
-    Phone : "+91 65534937"
+    Phone: "+91 65534937",
   },
 ];
 
@@ -109,6 +113,16 @@ export function DriverManagementComponent() {
   const [selectedDriver, setSelectedDriver] = useState(null);
   const [isAddDriverOpen, setIsAddDriverOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  const [formData, setFormData] = useState({
+    name: "",
+    licenseNumber: "", // Updated
+    experience: "",
+    availability: "",
+    phoneNumber: "", // Updated
+    address: "",
+    salary: "",
+  });
 
   const filteredDrivers = drivers.filter(
     (driver) =>
@@ -127,6 +141,42 @@ export function DriverManagementComponent() {
         return "bg-red-500";
       default:
         return "bg-gray-500";
+    }
+  };
+
+  const handleInputChange = (e) => {
+    const { id, value } = e.target;
+    setFormData((prevData) => ({
+      ...prevData,
+      [id]: id === "phoneNumber" || id === "salary" ? Number(value) : value,
+    }));
+  };
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+      const response = await apiClient.post(CREATE_DRIVER, formData);
+
+      if (response.status === 201) {
+        // Show success toast
+        toast.success("Driver created successfully!");
+      }
+
+      console.log("Driver added successfully:", response.data);
+
+      // Optionally close the dialog and reset form
+      setIsAddDriverOpen(false);
+      setFormData({
+        name: "",
+        licenseNumber: "", // Updated
+        experience: "",
+        availability: "",
+        phoneNumber: "", // Updated
+        address: "",
+        salary: "",
+      });
+    } catch (error) {
+      console.error("Error adding driver:", error);
     }
   };
 
@@ -164,25 +214,41 @@ export function DriverManagementComponent() {
                   Click save when you're done.
                 </DialogDescription>
               </DialogHeader>
-              <form className="space-y-4">
+              <form className="space-y-4" onSubmit={handleSubmit}>
                 <div>
                   <Label htmlFor="name">Name</Label>
-                  <Input id="name" placeholder="Enter driver's name" />
+                  <Input
+                    id="name"
+                    placeholder="Enter driver's name"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                  />
                 </div>
                 <div>
-                  <Label htmlFor="license">License Number</Label>
+                  <Label htmlFor="licenseNumber">License Number</Label>
                   <Input
-                    id="license"
+                    id="licenseNumber"
                     placeholder="Enter driver's license number"
+                    value={formData.licenseNumber}
+                    onChange={handleInputChange}
                   />
                 </div>
                 <div>
                   <Label htmlFor="experience">Experience</Label>
-                  <Input id="experience" placeholder="Years of experience" />
+                  <Input
+                    id="experience"
+                    placeholder="Years of experience"
+                    value={formData.experience}
+                    onChange={handleInputChange}
+                  />
                 </div>
                 <div>
                   <Label htmlFor="availability">Availability</Label>
-                  <Select>
+                  <Select
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, availability: value })
+                    }
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select availability" />
                     </SelectTrigger>
@@ -194,22 +260,38 @@ export function DriverManagementComponent() {
                   </Select>
                 </div>
                 <div>
-                  <Label htmlFor="phone">Phone Number</Label>
-                  <Input id="phone" placeholder="Enter phone number" />
+                  <Label htmlFor="phoneNumber">Phone Number</Label>
+                  <Input
+                    id="phoneNumber"
+                    type="number"
+                    placeholder="Enter phone number"
+                    value={formData.phoneNumber}
+                    onChange={handleInputChange}
+                  />
                 </div>
                 <div>
-                  <Label htmlFor="Address">Address</Label>
-                  <Input id="Address" type="text" placeholder="Enter address" />
+                  <Label htmlFor="address">Address</Label>
+                  <Input
+                    id="address"
+                    placeholder="Enter address"
+                    value={formData.address}
+                    onChange={handleInputChange}
+                  />
                 </div>
-
                 <div>
-                  <Label htmlFor="Salary">Salary</Label>
-                  <Input id="Salary" type="number" placeholder="Enter Salary" />
+                  <Label htmlFor="salary">Salary</Label>
+                  <Input
+                    id="salary"
+                    type="number"
+                    placeholder="Enter Salary"
+                    value={formData.salary}
+                    onChange={handleInputChange}
+                  />
                 </div>
+                <DialogFooter>
+                  <Button type="submit">Add Driver</Button>
+                </DialogFooter>
               </form>
-              <DialogFooter>
-                <Button type="submit">Add Driver</Button>
-              </DialogFooter>
             </DialogContent>
           </Dialog>
         </div>
@@ -387,12 +469,12 @@ export function DriverManagementComponent() {
                       {selectedDriver.availability}
                     </Badge>
                     <div className="flex items-center">
-                      <TicketSlash  className="w-4 h-4  text-black mr-2" />
+                      <TicketSlash className="w-4 h-4  text-black mr-2" />
                       <span> {selectedDriver.license}</span>
                     </div>
                     <div className="flex items-center">
-                    <CalendarDays  className="w-4 h-4  text-black mr-2" />
-                       {selectedDriver.experience}
+                      <CalendarDays className="w-4 h-4  text-black mr-2" />
+                      {selectedDriver.experience}
                     </div>
                   </div>
                 </div>
@@ -456,75 +538,78 @@ export function DriverManagementComponent() {
                 </Button>
 
                 <Dialog>
-                      <DialogTrigger asChild>
-                        <Button className="bg-black hover:bg-gray-800 text-white">
-                          <Pen className="mr-2 h-4 w-4" /> Update Driver
-                        </Button>
-                      </DialogTrigger>
+                  <DialogTrigger asChild>
+                    <Button className="bg-black hover:bg-gray-800 text-white">
+                      <Pen className="mr-2 h-4 w-4" /> Update Driver
+                    </Button>
+                  </DialogTrigger>
 
-                      <DialogContent className="sm:max-w-[425px]">
-                        <DialogHeader>
-                          <DialogTitle>Update Driver</DialogTitle>
-                          <DialogDescription>
-                            Enter the details you want to update. <br/>Click save
-                            when you're done.
-                          </DialogDescription>
-                        </DialogHeader>
+                  <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                      <DialogTitle>Update Driver</DialogTitle>
+                      <DialogDescription>
+                        Enter the details you want to update. <br />
+                        Click save when you're done.
+                      </DialogDescription>
+                    </DialogHeader>
 
-                        <form className="grid gap-4 py-4">
-                          <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="Phone" className="text-right">
-                              Phone Number
-                            </Label>
-                            <Input id="Phone" type = "number" className="col-span-3" />
-                          </div>
+                    <form className="grid gap-4 py-4">
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="Phone" className="text-right">
+                          Phone Number
+                        </Label>
+                        <Input
+                          id="Phone"
+                          type="number"
+                          className="col-span-3"
+                        />
+                      </div>
 
-                          <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="Address" className="text-right">
-                            Address
-                            </Label>
-                            <Input id="Address" className="col-span-3" />
-                          </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="Address" className="text-right">
+                          Address
+                        </Label>
+                        <Input id="Address" className="col-span-3" />
+                      </div>
 
-                          <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="Salary" className="text-right">
-                            Salary
-                            </Label>
-                            <Input id="Salary" type = "number" className="col-span-3" />
-                          </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="Salary" className="text-right">
+                          Salary
+                        </Label>
+                        <Input
+                          id="Salary"
+                          type="number"
+                          className="col-span-3"
+                        />
+                      </div>
 
-                          <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="status" className="text-right">
-                              Status
-                            </Label>
-                            <Select>
-                              <SelectTrigger className="col-span-3">
-                                <SelectValue placeholder="Select status" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="available">
-                                  Available
-                                </SelectItem>
-                                <SelectItem value="On Trip">
-                                  In Transit
-                                </SelectItem>
-                                <SelectItem value="Off Duty">
-                                  Maintenance
-                                </SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="status" className="text-right">
+                          Status
+                        </Label>
+                        <Select>
+                          <SelectTrigger className="col-span-3">
+                            <SelectValue placeholder="Select status" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="available">Available</SelectItem>
+                            <SelectItem value="On Trip">In Transit</SelectItem>
+                            <SelectItem value="Off Duty">
+                              Maintenance
+                            </SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
 
-                          <Button
-                            type="submit"
-                            className="bg-blue-500 hover:bg-blue-600 text-white"
-                          >
-                            Save Truck
-                          </Button>
-                        </form>
-                      </DialogContent>
-                    </Dialog>
-
+                      <Button
+                        type="submit"
+                        className="bg-blue-500 hover:bg-blue-600 text-white"
+                      >
+                        Save Truck
+                      </Button>
+                    </form>
+                  </DialogContent>
+                </Dialog>
               </DialogFooter>
             </DialogContent>
           </Dialog>
