@@ -57,7 +57,7 @@ export function DashboardComponent() {
           />
           <MetricCard
             title="Revenue"
-            value="$54,231"
+            value="₹54,231"
             change="+15% from last period"
             icon={<BarChart className="h-4 w-4 text-yellow-500" />}
           />

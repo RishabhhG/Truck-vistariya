@@ -13,6 +13,7 @@ import {
   Menu,
   TicketSlash ,
   CalendarDays,
+  Pen,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -449,40 +450,47 @@ export function DriverManagementComponent() {
               <DialogFooter>
                 <Button
                   variant="outline"
-                  className="transition-all hover:scale-105 bg-black text-white"
+                  className="transition-all hover:scale-105 bg-black text-white mr-5"
                 >
                   <Truck className="mr-2 h-4 w-4" /> Assign to Trip
                 </Button>
 
                 <Dialog>
                       <DialogTrigger asChild>
-                        <Button className="bg-black hover:bg-gray-800 text-white mt-1">
-                          <Pen className="mr-3 h-4 w-4" /> Update Truck
+                        <Button className="bg-black hover:bg-gray-800 text-white">
+                          <Pen className="mr-2 h-4 w-4" /> Update Driver
                         </Button>
                       </DialogTrigger>
 
                       <DialogContent className="sm:max-w-[425px]">
                         <DialogHeader>
-                          <DialogTitle>Update Truck</DialogTitle>
+                          <DialogTitle>Update Driver</DialogTitle>
                           <DialogDescription>
-                            Enter the details you want to update. Click save
+                            Enter the details you want to update. <br/>Click save
                             when you're done.
                           </DialogDescription>
                         </DialogHeader>
 
                         <form className="grid gap-4 py-4">
                           <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="model" className="text-right">
-                              Model
+                            <Label htmlFor="Phone" className="text-right">
+                              Phone Number
                             </Label>
-                            <Input id="model" className="col-span-3" />
+                            <Input id="Phone" type = "number" className="col-span-3" />
                           </div>
 
                           <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="capacity" className="text-right">
-                              Capacity
+                            <Label htmlFor="Address" className="text-right">
+                            Address
                             </Label>
-                            <Input id="capacity" className="col-span-3" />
+                            <Input id="Address" className="col-span-3" />
+                          </div>
+
+                          <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="Salary" className="text-right">
+                            Salary
+                            </Label>
+                            <Input id="Salary" type = "number" className="col-span-3" />
                           </div>
 
                           <div className="grid grid-cols-4 items-center gap-4">
@@ -497,10 +505,10 @@ export function DriverManagementComponent() {
                                 <SelectItem value="available">
                                   Available
                                 </SelectItem>
-                                <SelectItem value="intransit">
+                                <SelectItem value="On Trip">
                                   In Transit
                                 </SelectItem>
-                                <SelectItem value="maintenance">
+                                <SelectItem value="Off Duty">
                                   Maintenance
                                 </SelectItem>
                               </SelectContent>

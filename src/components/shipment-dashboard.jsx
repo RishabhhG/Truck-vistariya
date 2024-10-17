@@ -26,6 +26,7 @@ import {
   HandCoins ,
   Banknote,
   PlaneLanding,
+  IndianRupee,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -231,8 +232,8 @@ export function ShipmentDashboardComponent() {
               {shipment.status}
             </Badge>
           </TableCell>
-          <TableCell className = "text-left">${shipment.paymentPending}</TableCell>
-          <TableCell className = "text-left">${shipment.driverPayment}</TableCell>
+          <TableCell className = "text-left">₹{shipment.paymentPending}</TableCell>
+          <TableCell className = "text-left">₹{shipment.driverPayment}</TableCell>
           <TableCell className = "text-left">
             {format(parseISO(shipment.dateOfDispatch), "MMM dd, yyyy")}
           </TableCell>
@@ -291,14 +292,14 @@ export function ShipmentDashboardComponent() {
         <span className="mr-2 text-gray-500">
           <HandCoins /> {/* Replace with actual payment icon */}
         </span>
-        <span className="font-semibold mr-2">Payment:</span> ${shipment.paymentPending}
+        <span className="font-semibold mr-2">Payment:</span> ₹{shipment.paymentPending}
       </div>
 
       <div className="text-sm mb-4 flex items-center">
         <span className="mr-2 text-gray-500">
           <Banknote /> {/* Replace with actual driver payment icon */}
         </span>
-        <span className="font-semibold mr-2">Driver Payment:</span> ${shipment.driverPayment}
+        <span className="font-semibold mr-2">Driver Payment:</span> ₹{shipment.driverPayment}
       </div>
 
       <div className="text-sm mb-4 flex items-center">
@@ -593,7 +594,7 @@ export function ShipmentDashboardComponent() {
                       : "bg-red-100"
                   )}
                 >
-                  <DollarSign className="mr-2 h-4 w-4" />
+                  <IndianRupee className="mr-2 h-4 w-4" />
                   {filterPaid === null ? "All" : filterPaid ? "Paid" : "Unpaid"}
                 </Button>
                 <Button
@@ -658,11 +659,11 @@ export function ShipmentDashboardComponent() {
                   </div>
                   <div>
                     <p className="font-semibold">Payment Pending:</p>
-                    <p>${selectedShipment.paymentPending}</p>
+                    <p>₹{selectedShipment.paymentPending}</p>
                   </div>
                   <div>
                     <p className="font-semibold">Driver Payment:</p>
-                    <p>${selectedShipment.driverPayment}</p>
+                    <p>₹{selectedShipment.driverPayment}</p>
                   </div>
                   <div>
                     <p className="font-semibold">Dispatch Date:</p>
