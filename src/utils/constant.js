@@ -8,6 +8,10 @@ export const LOGIN_ROUTE = `${AUTH_ROUTE}/signin`;
 export const LOG_OUT = `${AUTH_ROUTE}/`;
 
 export const CLIENT_ROUTE = "api/clients";
+export const CREATE_CLIENT = `${CLIENT_ROUTE}/clients`;
+export const GET_ALL_CLIENTS = `${CLIENT_ROUTE}/`;
+export const GET_CLIENT_BY_ID = `${CLIENT_ROUTE}/:client`;
+export const UPDATE_CLIENT = `${CLIENT_ROUTE}/:client`;
 
 export const SHIPMENT_ROUTE = "api/shipment";
 export const CREATE_SHIPMENT = `${SHIPMENT_ROUTE}/`;
