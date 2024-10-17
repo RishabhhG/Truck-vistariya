@@ -7,8 +7,8 @@ export const LOGIN_ROUTE = `${AUTH_ROUTE}/signin`;
 //Logout route not written
 export const LOG_OUT = `${AUTH_ROUTE}/`;
 
-export const CLIENT_ROUTE = "api/clients";
-export const CREATE_CLIENT = `${CLIENT_ROUTE}/clients`;
+export const CLIENT_ROUTE = "api/client";
+export const CREATE_CLIENT = `${CLIENT_ROUTE}/`;
 export const GET_ALL_CLIENTS = `${CLIENT_ROUTE}/`;
 export const GET_CLIENT_BY_ID = `${CLIENT_ROUTE}/:client`;
 export const UPDATE_CLIENT = `${CLIENT_ROUTE}/:client`;
