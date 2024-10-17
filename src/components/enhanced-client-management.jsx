@@ -114,7 +114,7 @@ export function EnhancedClientManagement() {
         (selectedIndustry === "all" ||
           client.industry.toLowerCase() === selectedIndustry.toLowerCase()) &&
         (client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          client.industry.toLowerCase().includes(searchTerm.toLowerCase()))
+          client.industry.toLowerCase().includes(searchTerm.toLowerCase())),
     )
     .sort((a, b) => {
       if (a[sortColumn] < b[sortColumn])
@@ -268,17 +268,6 @@ export function EnhancedClientManagement() {
                       {sortColumn === "totalValue" &&
                         (sortDirection === "asc" ? "▲" : "▼")}
                     </TableHead>
-                    <TableHead
-                      onClick={() => handleSort("rating")}
-                      className="cursor-pointer whitespace-nowrap"
-                      aria-sort={
-                        sortColumn === "rating" ? sortDirection : "none"
-                      }
-                    >
-                      Rating{" "}
-                      {sortColumn === "rating" &&
-                        (sortDirection === "asc" ? "▲" : "▼")}
-                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -301,10 +290,7 @@ export function EnhancedClientManagement() {
                         {client.projects}
                       </TableCell>
                       <TableCell className="text-left">
-                      ₹{client.totalValue.toLocaleString()}
-                      </TableCell>
-                      <TableCell>
-                        <Rating value={client.rating} />
+                        ₹{client.totalValue.toLocaleString()}
                       </TableCell>
                     </TableRow>
                   ))}
@@ -359,14 +345,6 @@ function StatusBadge({ status }) {
   );
 }
 
-function Rating({ value }) {
-  return (
-    <div className="flex items-center">
-      <span className="text-yellow-400 mr-1">★</span>
-      <span>{value.toFixed(1)}</span>
-    </div>
-  );
-}
 
 function NewClientDialog({ open, onOpenChange }) {
   return (
@@ -404,18 +382,7 @@ function NewClientDialog({ open, onOpenChange }) {
             <Label htmlFor="industry" className="text-right">
               Industry
             </Label>
-            <Select>
-              <SelectTrigger className="col-span-3">
-                <SelectValue placeholder="Select industry" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="technology">Technology</SelectItem>
-                <SelectItem value="startup">Startup</SelectItem>
-                <SelectItem value="consulting">Consulting</SelectItem>
-                <SelectItem value="environmental">Environmental</SelectItem>
-                <SelectItem value="healthcare">Healthcare</SelectItem>
-              </SelectContent>
-            </Select>
+            <Input id="industry" className="col-span-3" />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="notes" className="text-right">
@@ -460,12 +427,6 @@ function ClientDetailsDialog({ client, open, onOpenChange }) {
             <Label className="text-right font-semibold">Total Value</Label>
             <div className="col-span-3">
               ${client.totalValue.toLocaleString()}
-            </div>
-          </div>
-          <div className="grid grid-cols-4 items-center gap-4">
-            <Label className="text-right font-semibold">Rating</Label>
-            <div className="col-span-3">
-              <Rating value={client.rating} />
             </div>
           </div>
         </div>
