@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import { apiClient } from "@/lib/api-client";
-import { CREATE_DRIVER } from "@/utils/constant";
+import { CREATE_DRIVER, GET_AVAILABLE_DRIVERS} from "@/utils/constant";
 import {
   Search,
   Filter,
@@ -56,7 +56,7 @@ import { Progress } from "@/components/ui/progress";
 import { Sidebar } from "./Sidebar";
 
 // Mock data for drivers
-const drivers = [
+const driver = [
   {
     id: 1,
     name: "John Doe",
@@ -113,6 +113,7 @@ export function DriverManagementComponent() {
   const [selectedDriver, setSelectedDriver] = useState(null);
   const [isAddDriverOpen, setIsAddDriverOpen] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [drivers, setDrivers] = useState([]); // State to hold drivers data
 
   const [formData, setFormData] = useState({
     name: "",
@@ -124,11 +125,25 @@ export function DriverManagementComponent() {
     salary: "",
   });
 
+  useEffect(() => {
+    const fetchDrivers = async () => {
+      try {
+        const response = await apiClient.get(GET_AVAILABLE_DRIVERS); 
+        console.log(response)
+        setDrivers(response.data); 
+      } catch (error) {
+        console.error("Error fetching drivers data:", error);
+      }
+    };
+
+    fetchDrivers(); 
+  }, []); 
+
   const filteredDrivers = drivers.filter(
     (driver) =>
       driver.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
       (availabilityFilter === "All" ||
-        driver.availability === availabilityFilter)
+        driver.availabilityStatus === availabilityFilter)
   );
 
   const getAvailabilityColor = (availability) => {
@@ -153,6 +168,17 @@ export function DriverManagementComponent() {
   };
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (
+      (!name ||
+      !licenseNumber ||
+      !experience ||
+      !phoneNumber ||
+      !address ||
+      !salary)
+    ) {
+      toast.error("All fields are required");
+    }
 
     try {
       const response = await apiClient.post(CREATE_DRIVER, formData);
@@ -410,17 +436,17 @@ export function DriverManagementComponent() {
                       <Badge
                         variant="secondary"
                         className={`${getAvailabilityColor(
-                          driver.availability
+                          driver.availabilityStatus
                         )} text-white transition-all hover:scale-105`}
                       >
-                        {driver.availability}
+                        {driver.availabilityStatus}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-center">
-                      {driver.license}
+                      {driver.licenseNumber}
                     </TableCell>
                     <TableCell className="text-center">
-                      {driver.experience}
+                      {driver.experience} 
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center">
@@ -463,18 +489,18 @@ export function DriverManagementComponent() {
                     <Badge
                       variant="secondary"
                       className={`${getAvailabilityColor(
-                        selectedDriver.availability
+                        selectedDriver.availabilityStatus
                       )} text-white`}
                     >
-                      {selectedDriver.availability}
+                      {selectedDriver.availabilityStatus}
                     </Badge>
                     <div className="flex items-center">
                       <TicketSlash className="w-4 h-4  text-black mr-2" />
-                      <span> {selectedDriver.license}</span>
+                      <span> {selectedDriver.licenseNumber}</span>
                     </div>
                     <div className="flex items-center">
                       <CalendarDays className="w-4 h-4  text-black mr-2" />
-                      {selectedDriver.experience}
+                      {selectedDriver.experience} 5
                     </div>
                   </div>
                 </div>
@@ -509,33 +535,28 @@ export function DriverManagementComponent() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <Label className="text-muted-foreground">Phone</Label>
-                    <p className="font-medium">+1 234 567 8900</p>
+                    <p className="font-medium">{selectedDriver.phoneNumber}</p>
                   </div>
                   <div>
-                    <Label className="text-muted-foreground">Email</Label>
+                    <Label className="text-muted-foreground">Address</Label>
                     <p className="font-medium">
                       {selectedDriver.name.toLowerCase().replace(" ", ".")}
-                      @example.com
+                      {selectedDriver.address}
                     </p>
                   </div>
                 </div>
                 <div>
                   <Label className="text-muted-foreground">
-                    Current Location
+                    Current Salary
                   </Label>
                   <div className="flex items-center mt-1">
                     <MapPin className="h-4 w-4 mr-1 text-muted-foreground" />
-                    <span>Los Angeles, CA</span>
+                    <span>{selectedDriver.salary}</span>
                   </div>
                 </div>
               </div>
               <DialogFooter>
-                <Button
-                  variant="outline"
-                  className="transition-all hover:scale-105 bg-black text-white mr-5"
-                >
-                  <Truck className="mr-2 h-4 w-4" /> Assign to Trip
-                </Button>
+              
 
                 <Dialog>
                   <DialogTrigger asChild>
