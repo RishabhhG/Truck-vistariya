@@ -233,15 +233,15 @@ export function TruckDashboard() {
     };
 
     if (
-      !registrationNumber ||
-      !model ||
-      !capacity ||
-      !fuelType ||
-      !mileage ||
-      !serviceDate ||
-      !availabilityStatus ||
-      !policyNumber ||
-      !expiryDate
+      !formData.registrationNumber ||
+      !formData.model ||
+      !formData.capacity ||
+      !formData.fuelType ||
+      !formData.mileage ||
+      !formData.serviceDate ||
+      !formData.availabilityStatus ||
+      !formData.policyNumber ||
+      !formData.expiryDate
     ) {
       toast.error("All fields are required");
     }
