@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { apiClient } from "@/lib/api-client";
-import { CREATE_DRIVER, GET_AVAILABLE_DRIVERS} from "@/utils/constant";
+import { CREATE_DRIVER,GET_ALL_DRIVERS} from "@/utils/constant";
 import {
   Search,
   Filter,
@@ -128,7 +128,7 @@ export function DriverManagementComponent() {
   useEffect(() => {
     const fetchDrivers = async () => {
       try {
-        const response = await apiClient.get(GET_AVAILABLE_DRIVERS); 
+        const response = await apiClient.get(GET_ALL_DRIVERS); 
         console.log(response)
         setDrivers(response.data); 
       } catch (error) {
