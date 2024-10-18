@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { apiClient } from "@/lib/api-client";
-import { CREATE_TRUCK } from "@/utils/constant";
+import { CREATE_TRUCK, GET_ALL_TRUCKS, UPDATE_TRUCK } from "@/utils/constant";
 import { Toaster, toast } from "react-hot-toast";
 import {
   Select,
@@ -43,6 +43,7 @@ import {
   Fuel,
   CircleGauge,
   Pen,
+  SquareM,
 } from "lucide-react";
 import {
   Carousel,
@@ -63,7 +64,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Sidebar } from "./Sidebar";
 // Mock data for trucks with additional details
-const onWayTrucks = [
+const onWayTruck = [
   {
     id: 1,
     name: "Truck A",
@@ -126,7 +127,7 @@ const onWayTrucks = [
   },
 ];
 
-const allTrucks = [
+const allTruck = [
   {
     id: 1,
     name: "Truck A",
@@ -175,7 +176,7 @@ const allTrucks = [
 
 const statusColors = {
   "On Time": "bg-green-500",
-  Delayed: "bg-red-500",
+  "Not Available": "bg-red-500",
   Available: "bg-green-500",
   "In Transit": "bg-blue-600",
   Maintenance: "bg-yellow-500",
@@ -186,6 +187,8 @@ export function TruckDashboard() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isAddNewTruckOpen, setIsAddNewTruckOpen] = useState(false);
+  const [allTrucks, setAllTrucks] = useState([]);
+  const [onWayTrucks, setOnWayTrucks] = useState([]);
 
   const [formData, setFormData] = useState({
     registrationNumber: "",
@@ -198,6 +201,26 @@ export function TruckDashboard() {
     expiryDate: "",
     availabilityStatus: "",
   });
+
+  useEffect(() => {
+    // API call to get all trucks
+    const fetchTrucks = async () => {
+      try {
+        const response = await apiClient.get(GET_ALL_TRUCKS);
+        console.log(response);
+        setAllTrucks(response.data.trucks); // Assuming response.data contains the list of trucks
+
+        const filteredOnWayTrucks = response.data.trucks.filter(
+          (truck) => truck.availabilityStatus === "Not Available" // Adjust the condition as per your status
+        );
+        setOnWayTrucks(filteredOnWayTrucks);
+      } catch (error) {
+        console.error("Error fetching trucks:", error);
+      }
+    };
+
+    fetchTrucks();
+  }, [allTrucks]); // Empty dependency array to run this once on component mount
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -212,6 +235,20 @@ export function TruckDashboard() {
       ...prevFormData,
       [name]: value, // Update select fields dynamically
     }));
+  };
+
+  const resetForm = () => {
+    setFormData({
+      registrationNumber: "",
+      model: "",
+      capacity: "",
+      fuelType: "",
+      mileage: "",
+      serviceDate: "",
+      policyNumber: "",
+      expiryDate: "",
+      availabilityStatus: "",
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -252,32 +289,87 @@ export function TruckDashboard() {
       if (response.status === 201) {
         // Show success toast
         toast.success("Truck created successfully!");
+        setAllTrucks((prevTrucks) => [...prevTrucks, response.data.truck]);
       }
 
       setIsAddNewTruckOpen(false);
-
-      setFormData({
-        registrationNumber: "",
-        model: "",
-        capacity: "",
-        fuelType: "",
-        mileage: "",
-        serviceDate: "",
-        policyNumber: "",
-        expiryDate: "",
-        availabilityStatus: "",
-      });
+      resetForm();
     } catch (error) {
       console.error("Error:", error);
     }
   };
 
-  const filteredTrucks = allTrucks.filter(
-    (truck) =>
-      truck.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      truck.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      truck.status.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const handleUpdateTruck = async (e) => {
+    e.preventDefault();
+
+    console.log("Selected Truck:", selectedTruck);
+
+    // Prepare the updated truck data only with fields that are filled
+    const updatedTruckData = {};
+
+    if (formData.model) updatedTruckData.model = formData.model;
+    if (formData.capacity)
+      updatedTruckData.capacity = Number(formData.capacity);
+    if (formData.availabilityStatus)
+      updatedTruckData.availabilityStatus = formData.availabilityStatus;
+    if (formData.fuelType) updatedTruckData.fuelType = formData.fuelType;
+    if (formData.mileage) updatedTruckData.mileage = Number(formData.mileage);
+    if (formData.policyNumber)
+      updatedTruckData.insuranceDetails = {
+        ...updatedTruckData.insuranceDetails,
+        policyNumber: formData.policyNumber,
+      };
+    if (formData.expiryDate)
+      updatedTruckData.insuranceDetails = {
+        ...updatedTruckData.insuranceDetails,
+        expiryDate: formData.expiryDate,
+      };
+
+    // Check if there's anything to update
+    if (Object.keys(updatedTruckData).length === 0) {
+      toast.error("Please provide at least one field to update.");
+      return;
+    }
+
+    try {
+      const response = await apiClient.put(
+        UPDATE_TRUCK.replace(":truckId", selectedTruck.truckId), // Ensure selectedTruck is defined
+        updatedTruckData
+      );
+
+      if (response.status === 200) {
+        toast.success("Truck updated successfully!");
+        setAllTrucks((prevTrucks) =>
+          prevTrucks.map((truck) =>
+            truck.truckId === selectedTruck.truckId
+              ? { ...truck, ...response.data.truck }
+              : truck
+          )
+        );
+
+        setSelectedTruck(null); // Close dialog
+        resetForm(); // Reset form after updating
+      }
+    } catch (error) {
+      console.error("Error updating truck:", error);
+      toast.error("Failed to update truck.");
+    }
+  };
+
+  const filteredTrucks = Array.isArray(allTrucks)
+    ? allTrucks.filter(
+        (truck) =>
+          truck.registrationNumber
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
+          truck.model.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          truck.availabilityStatus
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase()) ||
+          truck.fuelType.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          truck.insuranceDetails.policyNumber.includes(searchTerm)
+      )
+    : [];
 
   return (
     <div className="flex flex-col lg:flex-row min-h-screen">
@@ -500,26 +592,28 @@ export function TruckDashboard() {
                       <CardHeader className="bg-gray-50 rounded-t-lg">
                         <CardTitle className="flex items-center text-base font-bold md:text-lg">
                           <Truck className="mr-2 text-black h-4 w-4 md:h-5 md:w-5" />
-                          {truck.name}
+                          {truck.registrationNumber}
                         </CardTitle>
                         <CardDescription>
                           <Badge
                             className={`${
-                              statusColors[truck.status]
+                              statusColors[truck.availabilityStatus]
                             } text-white mt-2`}
                           >
-                            {truck.status}
+                            {truck.availabilityStatus}
                           </Badge>
                         </CardDescription>
                       </CardHeader>
                       <CardContent className="pt-4">
-                        <p className="flex items-center text-sm">
-                          <MapPin className="mr-2 text-black h-4 w-4" />{" "}
-                          {truck.destination}
+                        <p className="flex items-center text-sm gap-1">
+                          <SquareM className="mr-2 text-black h-4 w-4" />{" "}
+                          <span className="font-bold">Model : </span>
+                          {truck.model}
                         </p>
-                        <p className="flex items-center text-sm mt-2">
-                          <Clock className="mr-2 text-black h-4 w-4" />{" "}
-                          {truck.startTime} - {truck.endTime}
+                        <p className="flex items-center text-sm mt-2 gap-1">
+                          <Fuel className="mr-2 text-black h-4 w-4" />{" "}
+                          <span className="font-bold">Fuel : </span>
+                          {truck.fuelType}
                         </p>
                         <Dialog>
                           <DialogTrigger asChild>
@@ -536,37 +630,48 @@ export function TruckDashboard() {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
                                   <div className="flex items-center">
                                     <MapPin className="mr-2 text-green-500 h-4 w-4" />
-                                    <div className="font-bold">
+                                    <div className="font-bold mr-1">
                                       Destination:
                                     </div>{" "}
-                                    {truck.destination}
+                                    {truck.deliveryLocation}
                                   </div>
                                   <div className="flex items-center">
-                                    <Clock className="mr-2 text-purple-500 h-4 w-4" />
-                                    <div className="font-bold">Time:</div>{" "}
-                                    {truck.startTime} - {truck.endTime}
+                                    <MapPin className="mr-2 text-purple-500 h-4 w-4" />
+                                    <div className="font-bold mr-1">
+                                      Pickup:
+                                    </div>{" "}
+                                    {truck.pickupLocation}
                                   </div>
                                   <div className="flex items-center">
                                     <User className="mr-2 text-blue-500 h-4 w-4" />
-                                    <div className="font-bold">Driver:</div>{" "}
+                                    <div className="font-bold mr-1">
+                                      Driver:
+                                    </div>{" "}
                                     {truck.driver}
                                   </div>
                                   <div className="flex items-center">
                                     <Package className="mr-2 text-yellow-500 h-4 w-4" />
-                                    <div className="font-bold">Cargo:</div>{" "}
-                                    {truck.cargo}
+                                    <div className="font-bold mr-1">Cargo:</div>{" "}
+                                    <div className="text-sm">
+                                      {truck.cargoType}
+                                    </div>
                                   </div>
                                   <div className="flex items-center col-span-full">
                                     <Calendar className="mr-2 text-indigo-500 h-4 w-4" />
-                                    Expected Delivery: {truck.expectedDelivery}
+                                    <div className="font-bold mr-1">
+                                      Expected Delivery:
+                                    </div>
+                                    {new Date(
+                                      truck.arrivalDate
+                                    ).toLocaleDateString()}
                                   </div>
                                   <div className="flex items-center col-span-full">
                                     <Badge
                                       className={`${
-                                        statusColors[truck.status]
+                                        statusColors[truck.availabilityStatus]
                                       } text-white`}
                                     >
-                                      {truck.status}
+                                      {truck.availabilityStatus}
                                     </Badge>
                                   </div>
                                 </div>
@@ -620,7 +725,7 @@ export function TruckDashboard() {
                   {filteredTrucks.map((truck) => (
                     <TableRow key={truck.id} className="hover:bg-gray-50">
                       <TableCell className="font-medium px-4 py-2 text-left">
-                        {truck.name}
+                        {truck.registrationNumber}
                       </TableCell>
                       <TableCell className="px-4 py-2 text-left hidden md:table-cell">
                         {truck.model}
@@ -630,9 +735,11 @@ export function TruckDashboard() {
                       </TableCell>
                       <TableCell className="px-4 py-2 text-left">
                         <Badge
-                          className={`${statusColors[truck.status]} text-white`}
+                          className={`${
+                            statusColors[truck.availabilityStatus]
+                          } text-white`}
                         >
-                          {truck.status}
+                          {truck.availabilityStatus}
                         </Badge>
                       </TableCell>
                       <TableCell className="px-4 py-2 text-left">
@@ -665,12 +772,17 @@ export function TruckDashboard() {
                 <DialogDescription>
                   <div className="grid grid-cols-2 gap-4 mt-4">
                     <div className="flex items-center mt-2">
-                      <Wrench className="mr-2 text-yellow-500" /> Last
-                      Maintenance: {selectedTruck.lastMaintenance}
+                      <Calendar className="mr-2 text-green-500" />
+                      Policy number:{" "}
+                      {selectedTruck.insuranceDetails.policyNumber}
                     </div>
+
                     <div className="flex items-center mt-2">
-                      <Calendar className="mr-2 text-green-500" /> Next
-                      Maintenance: {selectedTruck.nextMaintenance}
+                      <Calendar className="mr-2 text-green-500" />
+                      Policy Expiry:{" "}
+                      {new Date(
+                        selectedTruck.insuranceDetails.expiryDate
+                      ).toLocaleDateString()}
                     </div>
                     <div className="flex items-center mt-2">
                       <Truck className="mr-2 text-blue-500" /> Model:{" "}
@@ -683,7 +795,7 @@ export function TruckDashboard() {
 
                     <div className="flex items-center mt-2">
                       <Fuel className="mr-2 text-yellow-800" /> Fuel Type:{" "}
-                      {selectedTruck.fuel}
+                      {selectedTruck.fuelType}
                     </div>
 
                     <div className="flex items-center mt-2">
@@ -695,10 +807,10 @@ export function TruckDashboard() {
                       Status:{" "}
                       <Badge
                         className={`${
-                          statusColors[selectedTruck.status]
+                          statusColors[selectedTruck.availabilityStatus]
                         } text-white ml-2`}
                       >
-                        {selectedTruck.status}
+                        {selectedTruck.availabilityStatus}
                       </Badge>
                     </div>
 
@@ -713,31 +825,51 @@ export function TruckDashboard() {
                         <DialogHeader>
                           <DialogTitle>Update Truck</DialogTitle>
                           <DialogDescription>
-                            Enter the details you want to update. Click save
-                            when you're done.
+                            Enter the details only you want to update.
+                            <br />
+                            Click save when you're done.
                           </DialogDescription>
                         </DialogHeader>
 
-                        <form className="grid gap-4 py-4">
+                        <form
+                          className="grid gap-4 py-4"
+                          onSubmit={handleUpdateTruck}
+                        >
                           <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="model" className="text-right">
                               Model
                             </Label>
-                            <Input id="model" className="col-span-3" />
+                            <Input
+                              id="model"
+                              name="model"
+                              value={formData.model}
+                              onChange={handleChange}
+                              className="col-span-3"
+                            />
                           </div>
 
                           <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="capacity" className="text-right">
                               Capacity
                             </Label>
-                            <Input id="capacity" className="col-span-3" />
+                            <Input
+                              id="capacity"
+                              name="capacity"
+                              value={formData.capacity}
+                              onChange={handleChange}
+                              className="col-span-3"
+                            />
                           </div>
-
                           <div className="grid grid-cols-4 items-center gap-4">
                             <Label htmlFor="status" className="text-right">
                               Status
                             </Label>
-                            <Select>
+                            <Select
+                              onValueChange={(value) =>
+                                handleSelectChange("availabilityStatus", value)
+                              }
+                              value={formData.availabilityStatus}
+                            >
                               <SelectTrigger className="col-span-3">
                                 <SelectValue placeholder="Select status" />
                               </SelectTrigger>
@@ -745,10 +877,10 @@ export function TruckDashboard() {
                                 <SelectItem value="available">
                                   Available
                                 </SelectItem>
-                                <SelectItem value="intransit">
-                                  In Transit
+                                <SelectItem value="Not Available">
+                                  Not Available
                                 </SelectItem>
-                                <SelectItem value="maintenance">
+                                <SelectItem value="Maintenance">
                                   Maintenance
                                 </SelectItem>
                               </SelectContent>
