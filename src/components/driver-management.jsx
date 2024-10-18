@@ -170,13 +170,14 @@ export function DriverManagementComponent() {
     e.preventDefault();
 
     if (
-      (!name ||
-      !licenseNumber ||
-      !experience ||
-      !phoneNumber ||
-      !address ||
-      !salary)
+      (!formData.name ||
+      !formData.licenseNumber ||
+      !formData.experience ||
+      !formData.phoneNumber ||
+      !formData.address ||
+      !formData.salary)
     ) {
+      
       toast.error("All fields are required");
     }
 
@@ -186,6 +187,7 @@ export function DriverManagementComponent() {
       if (response.status === 201) {
         // Show success toast
         toast.success("Driver created successfully!");
+        setDrivers([...drivers, response.data.driver]);
       }
 
       console.log("Driver added successfully:", response.data);
@@ -205,7 +207,6 @@ export function DriverManagementComponent() {
       console.error("Error adding driver:", error);
     }
   };
-
   return (
     <div className="flex flex-col lg:flex-row min-h-screen bg-gray-100">
       {/* Sidebar Component */}
