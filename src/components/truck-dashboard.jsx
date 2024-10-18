@@ -64,115 +64,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Sidebar } from "./Sidebar";
 // Mock data for trucks with additional details
-const onWayTruck = [
-  {
-    id: 1,
-    name: "Truck A",
-    destination: "New York",
-    startTime: "08:00 AM",
-    endTime: "04:00 PM",
-    status: "On Time",
-    driver: "John Doe",
-    cargo: "Electronics",
-    fuelLevel: "75%",
-    expectedDelivery: "2023-10-15",
-  },
-  {
-    id: 2,
-    name: "Truck B",
-    destination: "Los Angeles",
-    startTime: "09:30 AM",
-    endTime: "06:30 PM",
-    status: "Delayed",
-    driver: "Jane Smith",
-    cargo: "Furniture",
-    fuelLevel: "60%",
-    expectedDelivery: "2023-10-16",
-  },
-  {
-    id: 3,
-    name: "Truck C",
-    destination: "Chicago",
-    startTime: "07:45 AM",
-    endTime: "03:45 PM",
-    status: "On Time",
-    driver: "Bob Johnson",
-    cargo: "Food supplies",
-    fuelLevel: "80%",
-    expectedDelivery: "2023-10-14",
-  },
-  {
-    id: 4,
-    name: "Truck D",
-    destination: "Houston",
-    startTime: "10:00 AM",
-    endTime: "06:00 PM",
-    status: "On Time",
-    driver: "Alice Brown",
-    cargo: "Machinery",
-    fuelLevel: "70%",
-    expectedDelivery: "2023-10-15",
-  },
-  {
-    id: 5,
-    name: "Truck E",
-    destination: "Phoenix",
-    startTime: "09:15 AM",
-    endTime: "05:15 PM",
-    status: "Delayed",
-    driver: "Charlie Davis",
-    cargo: "Textiles",
-    fuelLevel: "65%",
-    expectedDelivery: "2023-10-17",
-  },
-];
 
-const allTruck = [
-  {
-    id: 1,
-    name: "Truck A",
-    lastMaintenance: "2023-05-15",
-    nextMaintenance: "2023-11-15",
-    model: "Freightliner Cascadia",
-    capacity: "80,000 lbs",
-    status: "Available",
-    fuel: "Petrol",
-    mileage: "30 kmpl",
-  },
-  {
-    id: 2,
-    name: "Truck B",
-    lastMaintenance: "2023-06-01",
-    nextMaintenance: "2023-12-01",
-    model: "Peterbilt 579",
-    capacity: "70,000 lbs",
-    status: "In Transit",
-    fuel: "Petrol",
-    mileage: "30 kmpl",
-  },
-  {
-    id: 3,
-    name: "Truck C",
-    lastMaintenance: "2023-04-30",
-    nextMaintenance: "2023-10-30",
-    model: "Kenworth T680",
-    capacity: "75,000 lbs",
-    status: "Maintenance",
-    fuel: "Electic",
-    mileage: "50 kmpl",
-  },
-  {
-    id: 4,
-    name: "Truck D",
-    lastMaintenance: "2023-05-20",
-    nextMaintenance: "2023-11-20",
-    model: "Volvo VNL",
-    capacity: "85,000 lbs",
-    status: "Available",
-    fuel: "Diesel",
-    mileage: "60 kmpl",
-  },
-];
 
 const statusColors = {
   "On Time": "bg-green-500",
@@ -220,7 +112,7 @@ export function TruckDashboard() {
     };
 
     fetchTrucks();
-  }, [allTrucks]); // Empty dependency array to run this once on component mount
+  }, []); 
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -289,8 +181,15 @@ export function TruckDashboard() {
       if (response.status === 201) {
         // Show success toast
         toast.success("Truck created successfully!");
+        
+        // Update allTrucks with the new truck
         setAllTrucks((prevTrucks) => [...prevTrucks, response.data.truck]);
-      }
+        
+        // Conditionally update onWayTrucks
+        if (response.data.truck.availabilityStatus === "Not Available") {
+            setOnWayTrucks((prevOnWayTrucks) => [...prevOnWayTrucks, response.data.truck]);
+        }
+    }
 
       setIsAddNewTruckOpen(false);
       resetForm();
