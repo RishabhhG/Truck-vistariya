@@ -3,11 +3,12 @@ import { BarChart, Package, Truck, LifeBuoy, CalendarArrowDown, UsersRound, Rece
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import Clock from "./Clock";
+import { Link } from "react-router-dom";
 
-const NavItem = ({ href, icon, text, active = false }) => {
+const NavItem = ({ to, icon, text, active = false }) => {
   return (
-    <a
-      href={href}
+    <Link
+      to={to}
       className={cn(
         "flex items-center space-x-3 p-3 rounded-lg transition-colors duration-200",
         active ? "bg-indigo-600 text-white" : "text-gray-400 hover:bg-gray-700 hover:text-white"
@@ -15,7 +16,7 @@ const NavItem = ({ href, icon, text, active = false }) => {
     >
       {icon}
       <span className="text-lg font-medium">{text}</span>
-    </a>
+    </Link>
   );
 };
 
@@ -28,37 +29,37 @@ const SidebarContent = ({ isLoggedIn, handleLogin, handleLogout }) => {
       <h1 className="text-3xl font-bold mb-10 text-center text-indigo-500">TMS Admin</h1>
       <nav className="space-y-3">
         <NavItem
-          href="/"
+          to="/"
           icon={<Package className="h-6 w-6" />}
           text="Dashboard"
           active={highlight === ""}
         />
         <NavItem
-          href="/truck-info"
+          to="/truck-info"
           icon={<Truck className="h-6 w-6" />}
           text="Truck Info"
           active={highlight === "truck-info"}
         />
         <NavItem
-          href="/ship"
+          to="/ship"
           icon={<CalendarArrowDown className="h-6 w-6" />}
           text="Shipment"
           active={highlight === "ship"}
         />
         <NavItem
-          href="/driver"
+          to="/driver"
           icon={<LifeBuoy className="h-6 w-6" />}
           text="Driver"
           active={highlight === "driver"}
         />
         <NavItem
-          href="/client"
+          to="/client"
           icon={<UsersRound className="h-6 w-6" />}
           text="Client"
           active={highlight === "client"}
         />
         <NavItem
-          href="/billing"
+          to="/billing"
           icon={<ReceiptIndianRupee className="h-6 w-6" />}
           text="Billing"
           active={highlight === "billing"}

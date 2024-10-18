@@ -1,24 +1,37 @@
 // src/pages/Signup.js
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { User, Lock, Mail, Eye, EyeOff } from 'lucide-react';
+import { useState } from "react";
+import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { User, Lock, Mail, Eye, EyeOff } from "lucide-react";
+
+import { apiClient } from "@/lib/api-client";
+import { SIGNUP_ROUTE } from "@/utils/constant";
 
 export function Signup() {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Signup', { name, email, password });
-  };
 
+    try {
+      const response = await apiClient.post(SIGNUP_ROUTE, {
+        username: name,
+        email,
+        password,
+      });
+
+      console.log("Signup successful:", response.data);
+    } catch (error) {
+      console.error("Signup failed:", error);
+    }
+  };
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 relative px-4">
       <div className="absolute inset-0 bg-black/10 backdrop-blur-sm"></div>
@@ -45,7 +58,10 @@ export function Signup() {
             </h2>
             <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="name" className="text-gray-600 text-sm font-medium"></Label>
+                <Label
+                  htmlFor="name"
+                  className="text-gray-600 text-sm font-medium"
+                ></Label>
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black w-4 h-4 md:w-5 md:h-5" />
                   <Input
@@ -61,7 +77,10 @@ export function Signup() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-gray-800 text-sm font-bold"></Label>
+                <Label
+                  htmlFor="email"
+                  className="text-gray-800 text-sm font-bold"
+                ></Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black w-4 h-4 md:w-5 md:h-5" />
                   <Input
@@ -77,12 +96,15 @@ export function Signup() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-gray-600 text-sm font-medium"></Label>
+                <Label
+                  htmlFor="password"
+                  className="text-gray-600 text-sm font-medium"
+                ></Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black w-4 h-4 md:w-5 md:h-5" />
                   <Input
                     id="password"
-                    type={showPassword ? 'text' : 'password'}
+                    type={showPassword ? "text" : "password"}
                     placeholder="Password"
                     className="pl-10 pr-10 bg-gray-700/40 border border-gray-600 text-gray-100 placeholder-gray-400 focus:ring-2 focus:ring-indigo-500"
                     value={password}
@@ -94,7 +116,11 @@ export function Signup() {
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-0 top-1/2 transform -translate-y-1/2 text-white hover:text-gray-200 focus:outline-none"
                   >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    {showPassword ? (
+                      <EyeOff className="w-4 h-4" />
+                    ) : (
+                      <Eye className="w-4 h-4" />
+                    )}
                   </button>
                 </div>
               </div>
