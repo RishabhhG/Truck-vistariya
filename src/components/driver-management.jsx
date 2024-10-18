@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { apiClient } from "@/lib/api-client";
-import { CREATE_DRIVER, GET_AVAILABLE_DRIVERS} from "@/utils/constant";
+import { CREATE_DRIVER,GET_ALL_DRIVERS} from "@/utils/constant";
 import {
   Search,
   Filter,
@@ -128,7 +128,7 @@ export function DriverManagementComponent() {
   useEffect(() => {
     const fetchDrivers = async () => {
       try {
-        const response = await apiClient.get(GET_AVAILABLE_DRIVERS); 
+        const response = await apiClient.get(GET_ALL_DRIVERS); 
         console.log(response)
         setDrivers(response.data); 
       } catch (error) {
@@ -170,13 +170,14 @@ export function DriverManagementComponent() {
     e.preventDefault();
 
     if (
-      (!name ||
-      !licenseNumber ||
-      !experience ||
-      !phoneNumber ||
-      !address ||
-      !salary)
+      (!formData.name ||
+      !formData.licenseNumber ||
+      !formData.experience ||
+      !formData.phoneNumber ||
+      !formData.address ||
+      !formData.salary)
     ) {
+      
       toast.error("All fields are required");
     }
 
@@ -186,6 +187,7 @@ export function DriverManagementComponent() {
       if (response.status === 201) {
         // Show success toast
         toast.success("Driver created successfully!");
+        setDrivers([...drivers, response.data.driver]);
       }
 
       console.log("Driver added successfully:", response.data);
@@ -205,7 +207,6 @@ export function DriverManagementComponent() {
       console.error("Error adding driver:", error);
     }
   };
-
   return (
     <div className="flex flex-col lg:flex-row min-h-screen bg-gray-100">
       {/* Sidebar Component */}

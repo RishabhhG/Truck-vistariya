@@ -2,6 +2,9 @@
 
 import React, { useState } from "react";
 import { Label } from "@/components/ui/label";
+import { apiClient } from "@/lib/api-client";
+import { CREATE_TRUCK } from "@/utils/constant";
+import { Toaster, toast } from "react-hot-toast";
 import {
   Select,
   SelectContent,
@@ -132,8 +135,8 @@ const allTrucks = [
     model: "Freightliner Cascadia",
     capacity: "80,000 lbs",
     status: "Available",
-    fuel : "Petrol",
-    mileage : "30 kmpl",
+    fuel: "Petrol",
+    mileage: "30 kmpl",
   },
   {
     id: 2,
@@ -143,8 +146,8 @@ const allTrucks = [
     model: "Peterbilt 579",
     capacity: "70,000 lbs",
     status: "In Transit",
-    fuel : "Petrol",
-    mileage : "30 kmpl",
+    fuel: "Petrol",
+    mileage: "30 kmpl",
   },
   {
     id: 3,
@@ -154,8 +157,8 @@ const allTrucks = [
     model: "Kenworth T680",
     capacity: "75,000 lbs",
     status: "Maintenance",
-    fuel : "Electic",
-    mileage : "50 kmpl",
+    fuel: "Electic",
+    mileage: "50 kmpl",
   },
   {
     id: 4,
@@ -165,8 +168,8 @@ const allTrucks = [
     model: "Volvo VNL",
     capacity: "85,000 lbs",
     status: "Available",
-    fuel : "Diesel",
-    mileage : "60 kmpl",
+    fuel: "Diesel",
+    mileage: "60 kmpl",
   },
 ];
 
@@ -183,6 +186,91 @@ export function TruckDashboard() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isAddNewTruckOpen, setIsAddNewTruckOpen] = useState(false);
+
+  const [formData, setFormData] = useState({
+    registrationNumber: "",
+    model: "",
+    capacity: "",
+    fuelType: "",
+    mileage: "",
+    serviceDate: "",
+    policyNumber: "",
+    expiryDate: "",
+    availabilityStatus: "",
+  });
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prevFormData) => ({
+      ...prevFormData,
+      [name]: value, // Update the specific field based on its name attribute
+    }));
+  };
+
+  const handleSelectChange = (name, value) => {
+    setFormData((prevFormData) => ({
+      ...prevFormData,
+      [name]: value, // Update select fields dynamically
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    // Make sure capacity and mileage are stored as numbers
+    const newTruck = {
+      registrationNumber: formData.registrationNumber,
+      model: formData.model,
+      capacity: Number(formData.capacity),
+      fuelType: formData.fuelType,
+      mileage: Number(formData.mileage),
+      serviceDate: formData.serviceDate,
+      availabilityStatus: formData.availabilityStatus,
+      insuranceDetails: {
+        policyNumber: formData.policyNumber,
+        expiryDate: formData.expiryDate,
+      },
+    };
+
+    if (
+      !registrationNumber ||
+      !model ||
+      !capacity ||
+      !fuelType ||
+      !mileage ||
+      !serviceDate ||
+      !availabilityStatus ||
+      !policyNumber ||
+      !expiryDate
+    ) {
+      toast.error("All fields are required");
+    }
+
+    try {
+      const response = await apiClient.post(CREATE_TRUCK, newTruck);
+
+      if (response.status === 201) {
+        // Show success toast
+        toast.success("Truck created successfully!");
+      }
+
+      setIsAddNewTruckOpen(false);
+
+      setFormData({
+        registrationNumber: "",
+        model: "",
+        capacity: "",
+        fuelType: "",
+        mileage: "",
+        serviceDate: "",
+        policyNumber: "",
+        expiryDate: "",
+        availabilityStatus: "",
+      });
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  };
 
   const filteredTrucks = allTrucks.filter(
     (truck) =>
@@ -225,7 +313,7 @@ export function TruckDashboard() {
             </TabsTrigger>
           </TabsList>
 
-          <Dialog>
+          <Dialog open={isAddNewTruckOpen} onOpenChange={setIsAddNewTruckOpen}>
             <div className="flex justify-end relative right-28 items-center mb-4 mt-5 ">
               <DialogTrigger asChild>
                 <Button className="bg-black hover:bg-gray-800 text-white">
@@ -238,55 +326,91 @@ export function TruckDashboard() {
               <DialogHeader>
                 <DialogTitle>Add New Truck</DialogTitle>
                 <DialogDescription>
-                  
-                  Enter the details for the new truck here. Click save when
-                  you're done.
+                  Enter the details for the new truck here.
+                  <br />
+                  Click save when you're done.
                 </DialogDescription>
               </DialogHeader>
 
-              <form className="grid gap-4 py-4">
+              <form className="grid gap-4 py-4" onSubmit={handleSubmit}>
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="name" className="text-right">
-                    Name
+                  <Label htmlFor="registrationNumber" className="text-right">
+                    Registration Number
                   </Label>
-                  <Input id="name" className="col-span-3" placeholder = "Truck Number" />
+                  <Input
+                    id="registrationNumber"
+                    name="registrationNumber"
+                    className="col-span-3"
+                    placeholder="Truck Number"
+                    value={formData.registrationNumber}
+                    onChange={handleChange}
+                    required
+                  />
                 </div>
 
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="model" className="text-right">
                     Model
                   </Label>
-                  <Input id="model" className="col-span-3" placeholder = "Truck Model"/>
+                  <Input
+                    id="model"
+                    name="model"
+                    className="col-span-3"
+                    placeholder="Truck Model"
+                    value={formData.model}
+                    onChange={handleChange}
+                    required
+                  />
                 </div>
 
                 <div className="grid grid-cols-4 items-center gap-4">
                   <Label htmlFor="capacity" className="text-right">
                     Capacity
                   </Label>
-                  <Input id="capacity" className="col-span-3" placeholder = "Truck Capacity"/>
+                  <Input
+                    id="capacity"
+                    name="capacity"
+                    className="col-span-3"
+                    placeholder="Truck Capacity"
+                    value={formData.capacity}
+                    onChange={handleChange}
+                    required
+                  />
                 </div>
 
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="status" className="text-right">
+                  <Label htmlFor="fuelType" className="text-right">
                     Fuel Type
                   </Label>
-                  <Select>
+                  <Select
+                    onValueChange={(value) =>
+                      handleSelectChange("fuelType", value)
+                    }
+                    required
+                  >
                     <SelectTrigger className="col-span-3">
-                      <SelectValue placeholder="Select status" />
+                      <SelectValue placeholder="Select fuel type" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="available">petrol</SelectItem>
-                      <SelectItem value="intransit">Diesel</SelectItem>
-                      <SelectItem value="maintenance">Electric</SelectItem>
+                      <SelectItem value="Petrol">Petrol</SelectItem>
+                      <SelectItem value="Diesel">Diesel</SelectItem>
+                      <SelectItem value="Electric">Electric</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="capacity" className="text-right">
+                  <Label htmlFor="mileage" className="text-right">
                     Mileage
                   </Label>
-                  <Input id="capacity" className="col-span-3" placeholder = "Truck Mileage"/>
+                  <Input
+                    id="mileage"
+                    name="mileage"
+                    className="col-span-3"
+                    placeholder="Truck Mileage"
+                    value={formData.mileage}
+                    onChange={handleChange}
+                  />
                 </div>
 
                 <div className="grid grid-cols-4 items-center gap-4">
@@ -295,30 +419,61 @@ export function TruckDashboard() {
                   </Label>
                   <Input
                     id="serviceDate"
-                    type="date" // This will render a date picker (calendar) in most browsers
+                    name="serviceDate"
+                    type="date"
                     className="col-span-3"
+                    value={formData.serviceDate}
+                    onChange={handleChange}
                   />
                 </div>
 
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="capacity" className="text-right">
-                    insurance Details
+                  <Label htmlFor="policyNumber" className="text-right">
+                    Insurance Policy Number
                   </Label>
-                  <Input id="capacity" className="col-span-3" placeholder = "Policy number"/>
+                  <Input
+                    id="policyNumber"
+                    name="policyNumber"
+                    className="col-span-3"
+                    placeholder="Policy number"
+                    value={formData.policyNumber}
+                    onChange={handleChange}
+                  />
                 </div>
 
                 <div className="grid grid-cols-4 items-center gap-4">
-                  <Label htmlFor="status" className="text-right">
+                  <Label htmlFor="expiryDate" className="text-right">
+                    Insurance Expiry Date
+                  </Label>
+                  <Input
+                    id="expiryDate"
+                    name="expiryDate"
+                    type="date"
+                    className="col-span-3"
+                    value={formData.expiryDate}
+                    onChange={handleChange}
+                  />
+                </div>
+
+                <div className="grid grid-cols-4 items-center gap-4">
+                  <Label htmlFor="availabilityStatus" className="text-right">
                     Status
                   </Label>
-                  <Select>
+                  <Select
+                    onValueChange={(value) =>
+                      handleSelectChange("availabilityStatus", value)
+                    }
+                    required
+                  >
                     <SelectTrigger className="col-span-3">
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="available">Available</SelectItem>
-                      <SelectItem value="intransit">In Transit</SelectItem>
-                      <SelectItem value="maintenance">Maintenance</SelectItem>
+                      <SelectItem value="Available">Available</SelectItem>
+                      <SelectItem value="Not Available">
+                        Not Available
+                      </SelectItem>
+                      <SelectItem value="Maintenance">Maintenance</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -517,7 +672,7 @@ export function TruckDashboard() {
                       <Calendar className="mr-2 text-green-500" /> Next
                       Maintenance: {selectedTruck.nextMaintenance}
                     </div>
-                    <div className="flex items-center mt-2" >
+                    <div className="flex items-center mt-2">
                       <Truck className="mr-2 text-blue-500" /> Model:{" "}
                       {selectedTruck.model}
                     </div>
@@ -535,8 +690,6 @@ export function TruckDashboard() {
                       <CircleGauge className="mr-2 text-red-600" /> Mileage:{" "}
                       {selectedTruck.mileage}
                     </div>
-
-
 
                     <div className="flex items-center font-bold text-black ">
                       Status:{" "}
