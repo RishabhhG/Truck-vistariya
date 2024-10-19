@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { apiClient } from "@/lib/api-client";
-import { CREATE_DRIVER,GET_ALL_DRIVERS} from "@/utils/constant";
+import { CREATE_DRIVER, GET_ALL_DRIVERS, UPDATE_DRIVER } from "@/utils/constant";
 import {
   Search,
   Filter,
@@ -55,58 +55,6 @@ import { Progress } from "@/components/ui/progress";
 // Sidebar Component
 import { Sidebar } from "./Sidebar";
 
-// Mock data for drivers
-const driver = [
-  {
-    id: 1,
-    name: "John Doe",
-    availability: "Available",
-    license: "DL-123456789",
-    experience: "5 years",
-    rating: 4.8,
-    image: "/placeholder.svg?height=40&width=40",
-    tripsCompleted: 120,
-    onTimeRate: 98,
-    Phone: "+91 674834937",
-  },
-  {
-    id: 2,
-    name: "Jane Smith",
-    availability: "On Trip",
-    license: "DL-098765432",
-    experience: "3 years",
-    rating: 4.5,
-    image: "/placeholder.svg?height=40&width=40",
-    tripsCompleted: 85,
-    onTimeRate: 95,
-    Phone: "+91 6746864937",
-  },
-  {
-    id: 3,
-    name: "Bob Johnson",
-    availability: "Available",
-    license: "DL-5463832",
-    experience: "7 years",
-    rating: 4.9,
-    image: "/placeholder.svg?height=40&width=40",
-    tripsCompleted: 200,
-    onTimeRate: 99,
-    Phone: "+91 67483434937",
-  },
-  {
-    id: 4,
-    name: "Alice Brown",
-    availability: "Off Duty",
-    license: "DL-94745267",
-    experience: "2 years",
-    rating: 4.2,
-    image: "/placeholder.svg?height=40&width=40",
-    tripsCompleted: 50,
-    onTimeRate: 92,
-    Phone: "+91 65534937",
-  },
-];
-
 export function DriverManagementComponent() {
   const [searchTerm, setSearchTerm] = useState("");
   const [availabilityFilter, setAvailabilityFilter] = useState("All");
@@ -119,7 +67,7 @@ export function DriverManagementComponent() {
     name: "",
     licenseNumber: "", // Updated
     experience: "",
-    availability: "",
+    availabilityStatus: "",
     phoneNumber: "", // Updated
     address: "",
     salary: "",
@@ -128,16 +76,16 @@ export function DriverManagementComponent() {
   useEffect(() => {
     const fetchDrivers = async () => {
       try {
-        const response = await apiClient.get(GET_ALL_DRIVERS); 
-        console.log(response)
-        setDrivers(response.data); 
+        const response = await apiClient.get(GET_ALL_DRIVERS);
+        console.log(response);
+        setDrivers(response.data);
       } catch (error) {
         console.error("Error fetching drivers data:", error);
       }
     };
 
-    fetchDrivers(); 
-  }, []); 
+    fetchDrivers();
+  }, []);
 
   const filteredDrivers = drivers.filter(
     (driver) =>
@@ -152,7 +100,7 @@ export function DriverManagementComponent() {
         return "bg-green-500";
       case "On Trip":
         return "bg-blue-500";
-      case "Off Duty":
+      case "Not Available":
         return "bg-red-500";
       default:
         return "bg-gray-500";
@@ -166,18 +114,30 @@ export function DriverManagementComponent() {
       [id]: id === "phoneNumber" || id === "salary" ? Number(value) : value,
     }));
   };
+
+  const resetForm = () => {
+    setFormData({
+      name: "",
+      licenseNumber: "", // Updated
+      experience: "",
+      availabilityStatus: "",
+      phoneNumber: "", // Updated
+      address: "",
+      salary: "",
+    });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (
-      (!formData.name ||
+      !formData.name ||
       !formData.licenseNumber ||
       !formData.experience ||
       !formData.phoneNumber ||
       !formData.address ||
-      !formData.salary)
+      !formData.salary
     ) {
-      
       toast.error("All fields are required");
     }
 
@@ -194,19 +154,62 @@ export function DriverManagementComponent() {
 
       // Optionally close the dialog and reset form
       setIsAddDriverOpen(false);
-      setFormData({
-        name: "",
-        licenseNumber: "", // Updated
-        experience: "",
-        availability: "",
-        phoneNumber: "", // Updated
-        address: "",
-        salary: "",
-      });
+      resetForm()
     } catch (error) {
       console.error("Error adding driver:", error);
     }
   };
+
+  const handleUpdateDriver = async (e) => {
+    e.preventDefault();
+
+    // Prepare the updated truck data only with fields that are filled
+    const updatedDriverData = {};
+
+    if (formData.availabilityStatus)
+      updatedDriverData.availabilityStatus = formData.availabilityStatus;
+    
+    if(formData.phoneNumber)
+      updatedDriverData.phoneNumber = formData.phoneNumber;
+
+    if(formData.address)
+      updatedDriverData.address = formData.address;
+
+    if(formData.salary)
+      updatedDriverData.salary = formData.salary;
+
+    // Check if there's anything to update
+    if (Object.keys(updatedDriverData).length === 0) {
+      toast.error("Please provide at least one field to update.");
+      return;
+    }
+
+    try {
+      const response = await apiClient.put(
+        UPDATE_DRIVER.replace(":driverId", selectedDriver.driverId), // Ensure selectedTruck is defined
+        updatedDriverData
+      );
+
+      if (response.status === 200) {
+        toast.success("Driver updated successfully!");
+        setDrivers((prevDriver) =>
+          prevDriver.map((driver) =>
+            driver.driverId === selectedDriver.driverId
+              ? { ...driver, ...response.data.driver }
+              : driver
+          )
+        );
+
+        setSelectedDriver(null); // Close dialog
+        resetForm(); // Reset form after updating
+      }
+    }  catch (error) {
+      console.error("Error updating truck:", error);
+      toast.error("Failed to update truck.");
+    }
+  };
+
+
   return (
     <div className="flex flex-col lg:flex-row min-h-screen bg-gray-100">
       {/* Sidebar Component */}
@@ -273,7 +276,7 @@ export function DriverManagementComponent() {
                   <Label htmlFor="availability">Availability</Label>
                   <Select
                     onValueChange={(value) =>
-                      setFormData({ ...formData, availability: value })
+                      setFormData({ ...formData, availabilityStatus: value })
                     }
                   >
                     <SelectTrigger>
@@ -281,8 +284,7 @@ export function DriverManagementComponent() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="Available">Available</SelectItem>
-                      <SelectItem value="On Trip">On Trip</SelectItem>
-                      <SelectItem value="Off Duty">Off Duty</SelectItem>
+                      <SelectItem value="Not Available">Not Available</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -347,7 +349,10 @@ export function DriverManagementComponent() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {drivers.filter((d) => d.availability === "Available").length}
+                {
+                  drivers.filter((d) => d.availabilityStatus === "Available")
+                    .length
+                }
               </div>
               <p className="text-xs text-muted-foreground">
                 Ready for assignment
@@ -393,8 +398,7 @@ export function DriverManagementComponent() {
                 <SelectContent>
                   <SelectItem value="All">All</SelectItem>
                   <SelectItem value="Available">Available</SelectItem>
-                  <SelectItem value="On Trip">On Trip</SelectItem>
-                  <SelectItem value="Off Duty">Off Duty</SelectItem>
+                  <SelectItem value="Not Available">Not Available</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -438,7 +442,7 @@ export function DriverManagementComponent() {
                         variant="secondary"
                         className={`${getAvailabilityColor(
                           driver.availabilityStatus
-                        )} text-white transition-all hover:scale-105`}
+                        )} text-white transition-all hover:scale-105 hover:bg-black`}
                       >
                         {driver.availabilityStatus}
                       </Badge>
@@ -447,7 +451,7 @@ export function DriverManagementComponent() {
                       {driver.licenseNumber}
                     </TableCell>
                     <TableCell className="text-center">
-                      {driver.experience} 
+                      {driver.experience}
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center">
@@ -501,7 +505,7 @@ export function DriverManagementComponent() {
                     </div>
                     <div className="flex items-center">
                       <CalendarDays className="w-4 h-4  text-black mr-2" />
-                      {selectedDriver.experience} 5
+                      {selectedDriver.experience}
                     </div>
                   </div>
                 </div>
@@ -557,8 +561,6 @@ export function DriverManagementComponent() {
                 </div>
               </div>
               <DialogFooter>
-              
-
                 <Dialog>
                   <DialogTrigger asChild>
                     <Button className="bg-black hover:bg-gray-800 text-white">
@@ -575,7 +577,10 @@ export function DriverManagementComponent() {
                       </DialogDescription>
                     </DialogHeader>
 
-                    <form className="grid gap-4 py-4">
+                    <form
+                      className="grid gap-4 py-4"
+                      onSubmit={handleUpdateDriver}
+                    >
                       <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="Phone" className="text-right">
                           Phone Number
@@ -584,6 +589,8 @@ export function DriverManagementComponent() {
                           id="Phone"
                           type="number"
                           className="col-span-3"
+                          value={formData.phoneNumber}
+                          onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
                         />
                       </div>
 
@@ -591,7 +598,12 @@ export function DriverManagementComponent() {
                         <Label htmlFor="Address" className="text-right">
                           Address
                         </Label>
-                        <Input id="Address" className="col-span-3" />
+                        <Input
+                          id="Address"
+                          className="col-span-3"
+                          value={formData.address}
+                          onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                        />
                       </div>
 
                       <div className="grid grid-cols-4 items-center gap-4">
@@ -602,6 +614,8 @@ export function DriverManagementComponent() {
                           id="Salary"
                           type="number"
                           className="col-span-3"
+                          value={formData.salary}
+                          onChange={(e) => setFormData({ ...formData, salary: e.target.value })}
                         />
                       </div>
 
@@ -609,15 +623,22 @@ export function DriverManagementComponent() {
                         <Label htmlFor="status" className="text-right">
                           Status
                         </Label>
-                        <Select>
+                        <Select
+                          value={formData.availabilityStatus}
+                          onValueChange={(value) =>
+                            setFormData({
+                              ...formData,
+                              availabilityStatus: value,
+                            })
+                          }
+                        >
                           <SelectTrigger className="col-span-3">
                             <SelectValue placeholder="Select status" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="available">Available</SelectItem>
-                            <SelectItem value="On Trip">In Transit</SelectItem>
-                            <SelectItem value="Off Duty">
-                              Maintenance
+                            <SelectItem value="Available">Available</SelectItem>
+                            <SelectItem value="Not Available">
+                              Not Available
                             </SelectItem>
                           </SelectContent>
                         </Select>

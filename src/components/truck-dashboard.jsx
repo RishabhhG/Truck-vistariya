@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { apiClient } from "@/lib/api-client";
 import { CREATE_TRUCK, GET_ALL_TRUCKS, UPDATE_TRUCK } from "@/utils/constant";
 import { Toaster, toast } from "react-hot-toast";
+import ClimbingBoxLoader from "react-spinners/ClimbingBoxLoader";
 import {
   Select,
   SelectContent,
@@ -65,7 +66,6 @@ import { Badge } from "@/components/ui/badge";
 import { Sidebar } from "./Sidebar";
 // Mock data for trucks with additional details
 
-
 const statusColors = {
   "On Time": "bg-green-500",
   "Not Available": "bg-red-500",
@@ -81,6 +81,7 @@ export function TruckDashboard() {
   const [isAddNewTruckOpen, setIsAddNewTruckOpen] = useState(false);
   const [allTrucks, setAllTrucks] = useState([]);
   const [onWayTrucks, setOnWayTrucks] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const [formData, setFormData] = useState({
     registrationNumber: "",
@@ -108,11 +109,13 @@ export function TruckDashboard() {
         setOnWayTrucks(filteredOnWayTrucks);
       } catch (error) {
         console.error("Error fetching trucks:", error);
+      } finally {
+        setLoading(false); // Stop loading when data fetching completes
       }
     };
 
     fetchTrucks();
-  }, []); 
+  }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -181,15 +184,18 @@ export function TruckDashboard() {
       if (response.status === 201) {
         // Show success toast
         toast.success("Truck created successfully!");
-        
+
         // Update allTrucks with the new truck
         setAllTrucks((prevTrucks) => [...prevTrucks, response.data.truck]);
-        
+
         // Conditionally update onWayTrucks
         if (response.data.truck.availabilityStatus === "Not Available") {
-            setOnWayTrucks((prevOnWayTrucks) => [...prevOnWayTrucks, response.data.truck]);
+          setOnWayTrucks((prevOnWayTrucks) => [
+            ...prevOnWayTrucks,
+            response.data.truck,
+          ]);
         }
-    }
+      }
 
       setIsAddNewTruckOpen(false);
       resetForm();
@@ -200,8 +206,6 @@ export function TruckDashboard() {
 
   const handleUpdateTruck = async (e) => {
     e.preventDefault();
-
-    console.log("Selected Truck:", selectedTruck);
 
     // Prepare the updated truck data only with fields that are filled
     const updatedTruckData = {};
@@ -245,6 +249,15 @@ export function TruckDashboard() {
               : truck
           )
         );
+
+        if (response.data.truck.availabilityStatus === "Available") {
+          // Remove the truck from onWayTrucks if its status changes to "Available"
+          setOnWayTrucks((prevOnWayTrucks) =>
+            prevOnWayTrucks.filter(
+              (truck) => truck.truckId !== response.data.truck.truckId
+            )
+          );
+        }
 
         setSelectedTruck(null); // Close dialog
         resetForm(); // Reset form after updating
@@ -479,114 +492,126 @@ export function TruckDashboard() {
             </DialogContent>
           </Dialog>
 
-          <TabsContent value="onway">
-            <Carousel className="w-full max-w-5xl mx-auto mt-5">
-              <CarouselContent className="-ml-2 md:-ml-4">
-                {onWayTrucks.map((truck) => (
-                  <CarouselItem
-                    key={truck.id}
-                    className="pl-2 md:pl-4 md:basis-1/2 lg:basis-1/3"
-                  >
-                    <Card className="w-full bg-white shadow-lg hover:shadow-xl transition-shadow duration-300">
-                      <CardHeader className="bg-gray-50 rounded-t-lg">
-                        <CardTitle className="flex items-center text-base font-bold md:text-lg">
-                          <Truck className="mr-2 text-black h-4 w-4 md:h-5 md:w-5" />
-                          {truck.registrationNumber}
-                        </CardTitle>
-                        <CardDescription>
-                          <Badge
-                            className={`${
-                              statusColors[truck.availabilityStatus]
-                            } text-white mt-2`}
-                          >
-                            {truck.availabilityStatus}
-                          </Badge>
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent className="pt-4">
-                        <p className="flex items-center text-sm gap-1">
-                          <SquareM className="mr-2 text-black h-4 w-4" />{" "}
-                          <span className="font-bold">Model : </span>
-                          {truck.model}
-                        </p>
-                        <p className="flex items-center text-sm mt-2 gap-1">
-                          <Fuel className="mr-2 text-black h-4 w-4" />{" "}
-                          <span className="font-bold">Fuel : </span>
-                          {truck.fuelType}
-                        </p>
-                        <Dialog>
-                          <DialogTrigger asChild>
-                            <Button className="mt-4 w-full bg-black hover:bg-gray-800 text-white text-sm">
-                              View Details
-                            </Button>
-                          </DialogTrigger>
-                          <DialogContent className="bg-white max-w-md w-full">
-                            <DialogHeader>
-                              <DialogTitle className="text-xl md:text-2xl font-bold text-gray-800">
-                                {truck.name} Details
-                              </DialogTitle>
-                              <DialogDescription>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                                  <div className="flex items-center">
-                                    <MapPin className="mr-2 text-green-500 h-4 w-4" />
-                                    <div className="font-bold mr-1">
-                                      Destination:
-                                    </div>{" "}
-                                    {truck.deliveryLocation}
-                                  </div>
-                                  <div className="flex items-center">
-                                    <MapPin className="mr-2 text-purple-500 h-4 w-4" />
-                                    <div className="font-bold mr-1">
-                                      Pickup:
-                                    </div>{" "}
-                                    {truck.pickupLocation}
-                                  </div>
-                                  <div className="flex items-center">
-                                    <User className="mr-2 text-blue-500 h-4 w-4" />
-                                    <div className="font-bold mr-1">
-                                      Driver:
-                                    </div>{" "}
-                                    {truck.driver}
-                                  </div>
-                                  <div className="flex items-center">
-                                    <Package className="mr-2 text-yellow-500 h-4 w-4" />
-                                    <div className="font-bold mr-1">Cargo:</div>{" "}
-                                    <div className="text-sm">
-                                      {truck.cargoType}
+          <div>
+            {loading ? ( // Conditional rendering for loading state
+              <div className="flex justify-center items-center">
+                <ClimbingBoxLoader />
+              </div> // Display this when loading is true
+            ) : (
+              <TabsContent value="onway">
+                <Carousel className="w-full max-w-5xl mx-auto mt-5">
+                  <CarouselContent className="-ml-2 md:-ml-4">
+                    {onWayTrucks.map((truck) => (
+                      <CarouselItem
+                        key={truck.id}
+                        className="pl-2 md:pl-4 md:basis-1/2 lg:basis-1/3"
+                      >
+                        <Card className="w-full bg-white shadow-lg hover:shadow-xl transition-shadow duration-300">
+                          <CardHeader className="bg-gray-50 rounded-t-lg">
+                            <CardTitle className="flex items-center text-base font-bold md:text-lg">
+                              <Truck className="mr-2 text-black h-4 w-4 md:h-5 md:w-5" />
+                              {truck.registrationNumber}
+                            </CardTitle>
+                            <CardDescription>
+                              <Badge
+                                className={`${
+                                  statusColors[truck.availabilityStatus]
+                                } text-white mt-2`}
+                              >
+                                {truck.availabilityStatus}
+                              </Badge>
+                            </CardDescription>
+                          </CardHeader>
+                          <CardContent className="pt-4">
+                            <p className="flex items-center text-sm gap-1">
+                              <SquareM className="mr-2 text-black h-4 w-4" />{" "}
+                              <span className="font-bold">Model : </span>
+                              {truck.model}
+                            </p>
+                            <p className="flex items-center text-sm mt-2 gap-1">
+                              <Fuel className="mr-2 text-black h-4 w-4" />{" "}
+                              <span className="font-bold">Fuel : </span>
+                              {truck.fuelType}
+                            </p>
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button className="mt-4 w-full bg-black hover:bg-gray-800 text-white text-sm">
+                                  View Details
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent className="bg-white max-w-md w-full">
+                                <DialogHeader>
+                                  <DialogTitle className="text-xl md:text-2xl font-bold text-gray-800">
+                                    {truck.name} Details
+                                  </DialogTitle>
+                                  <DialogDescription>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                                      <div className="flex items-center">
+                                        <MapPin className="mr-2 text-green-500 h-4 w-4" />
+                                        <div className="font-bold mr-1">
+                                          Destination:
+                                        </div>{" "}
+                                        {truck.deliveryLocation}
+                                      </div>
+                                      <div className="flex items-center">
+                                        <MapPin className="mr-2 text-purple-500 h-4 w-4" />
+                                        <div className="font-bold mr-1">
+                                          Pickup:
+                                        </div>{" "}
+                                        {truck.pickupLocation}
+                                      </div>
+                                      <div className="flex items-center">
+                                        <User className="mr-2 text-blue-500 h-4 w-4" />
+                                        <div className="font-bold mr-1">
+                                          Driver:
+                                        </div>{" "}
+                                        {truck.driver}
+                                      </div>
+                                      <div className="flex items-center">
+                                        <Package className="mr-2 text-yellow-500 h-4 w-4" />
+                                        <div className="font-bold mr-1">
+                                          Cargo:
+                                        </div>{" "}
+                                        <div className="text-sm">
+                                          {truck.cargoType}
+                                        </div>
+                                      </div>
+                                      <div className="flex items-center col-span-full">
+                                        <Calendar className="mr-2 text-indigo-500 h-4 w-4" />
+                                        <div className="font-bold mr-1">
+                                          Expected Delivery:
+                                        </div>
+                                        {new Date(
+                                          truck.arrivalDate
+                                        ).toLocaleDateString()}
+                                      </div>
+                                      <div className="flex items-center col-span-full">
+                                        <Badge
+                                          className={`${
+                                            statusColors[
+                                              truck.availabilityStatus
+                                            ]
+                                          } text-white`}
+                                        >
+                                          {truck.availabilityStatus}
+                                        </Badge>
+                                      </div>
                                     </div>
-                                  </div>
-                                  <div className="flex items-center col-span-full">
-                                    <Calendar className="mr-2 text-indigo-500 h-4 w-4" />
-                                    <div className="font-bold mr-1">
-                                      Expected Delivery:
-                                    </div>
-                                    {new Date(
-                                      truck.arrivalDate
-                                    ).toLocaleDateString()}
-                                  </div>
-                                  <div className="flex items-center col-span-full">
-                                    <Badge
-                                      className={`${
-                                        statusColors[truck.availabilityStatus]
-                                      } text-white`}
-                                    >
-                                      {truck.availabilityStatus}
-                                    </Badge>
-                                  </div>
-                                </div>
-                              </DialogDescription>
-                            </DialogHeader>
-                          </DialogContent>
-                        </Dialog>
-                      </CardContent>
-                    </Card>
-                  </CarouselItem>
-                ))}
-              </CarouselContent>
-              <CarouselNext className="hidden md:flex items-center justify-center text-white bg-black rounded-full p-2" />
-              <CarouselPrevious className="hidden md:flex items-center justify-center text-white bg-black rounded-full p-2" />
-            </Carousel>
-          </TabsContent>
+                                  </DialogDescription>
+                                </DialogHeader>
+                              </DialogContent>
+                            </Dialog>
+                          </CardContent>
+                        </Card>
+                      </CarouselItem>
+                    ))}
+                  </CarouselContent>
+                  <CarouselNext className="hidden md:flex items-center justify-center text-white bg-black rounded-full p-2" />
+                  <CarouselPrevious className="hidden md:flex items-center justify-center text-white bg-black rounded-full p-2" />
+                </Carousel>
+              </TabsContent>
+            )}
+          </div>
 
           <TabsContent value="all">
             <div className="mb-4 flex flex-col sm:flex-row items-center mt-5">
@@ -773,7 +798,7 @@ export function TruckDashboard() {
                                 <SelectValue placeholder="Select status" />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="available">
+                                <SelectItem value="Available">
                                   Available
                                 </SelectItem>
                                 <SelectItem value="Not Available">
