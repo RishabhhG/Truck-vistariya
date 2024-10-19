@@ -63,6 +63,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Sidebar } from "@/components/Sidebar"; // Import Sidebar
 import { cn } from "@/lib/utils"; // Ensure this import exists for className utility
+import ShipmentForm from "./Shipment-dialog";
 
 export function ShipmentDashboardComponent() {
   const [activeTab, setActiveTab] = useState("ongoing");
@@ -110,7 +111,7 @@ export function ShipmentDashboardComponent() {
   const [filterToday, setFilterToday] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Manage sidebar state
-
+  const [createShipmentOpen, setCreateShipmentOpen] = useState(false)
   const statusColors = {
     Delivered: "bg-green-500",
     Delayed: "bg-red-500",
@@ -374,197 +375,14 @@ export function ShipmentDashboardComponent() {
                   <span className="sm:hidden">All</span>
                 </TabsTrigger>
               </TabsList>
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button>
+                  <Button onClick={()=>{
+                      setCreateShipmentOpen(true);
+                  }}>
                     <Plus className="mr-2 h-4 w-4" />
                     New Shipment
                   </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[425px]">
-                  <DialogHeader>
-                    <DialogTitle>Create New Shipment</DialogTitle>
-                    <DialogDescription>
-                      Enter the details for the new shipment.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <Form {...form}>
-                    <form
-                      onSubmit={form.handleSubmit(onSubmit)}
-                      className="space-y-4"
-                    >
-                      {/* Form fields remain the same */}
-
-                      <FormField
-                        control={form.control}
-                        name="name"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Shipment Name</FormLabel>
-                            <FormControl>
-                              <Input
-                                placeholder="Enter shipment name"
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <FormField
-                        control={form.control}
-                        name="clientName"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Client Name</FormLabel>
-                            <FormControl>
-                              <Input
-                                placeholder="Enter client name"
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                      <div className="grid grid-cols-2 gap-4">
-                        <FormField
-                          control={form.control}
-                          name="origin"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Origin</FormLabel>
-                              <FormControl>
-                                <Input placeholder="Enter origin" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name="destination"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Destination</FormLabel>
-                              <FormControl>
-                                <Input
-                                  placeholder="Enter destination"
-                                  {...field}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <FormField
-                          control={form.control}
-                          name="paymentPending"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Payment Pending</FormLabel>
-                              <FormControl>
-                                <Input
-                                  type="number"
-                                  placeholder="Enter pending payment"
-                                  {...field}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name="availableTruck"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Select Available Driver</FormLabel>
-                              <FormControl>
-                                <select {...field} className="truck-select">
-                                  <option value="">Select a Driver</option>
-                                  <option value="truck1">Driver 1</option>
-                                  <option value="truck2">Driver 2</option>
-                                  <option value="truck3">Driver 3</option>
-                                </select>
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <FormField
-                          control={form.control}
-                          name="dateOfDispatch"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Date of Dispatch</FormLabel>
-                              <FormControl>
-                                <Input type="date" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name="dateOfArrival"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Date of Arrival</FormLabel>
-                              <FormControl>
-                                <Input type="date" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name="availableTruck"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Select Available Truck</FormLabel>
-                              <FormControl>
-                                <select {...field} className="truck-select">
-                                  <option value="">Select a truck</option>
-                                  <option value="truck1">Truck 1</option>
-                                  <option value="truck2">Truck 2</option>
-                                  <option value="truck3">Truck 3</option>
-                                </select>
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-
-                        <FormField
-                          control={form.control}
-                          name="destination"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Cargo type</FormLabel>
-                              <FormControl>
-                                <Input
-                                  placeholder="Enter Cargo Type"
-                                  {...field}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                      <Button type="submit">Create Shipment</Button>
-                    </form>
-                  </Form>
-                </DialogContent>
-              </Dialog>
+                  <ShipmentForm createShipmentOpen={createShipmentOpen} setCreateShipmentOpen={setCreateShipmentOpen}></ShipmentForm>
+             
             </div>
             <Card>
               <CardHeader>
