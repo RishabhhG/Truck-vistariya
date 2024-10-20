@@ -38,7 +38,7 @@ export default function CreateShipmentModal({
     arrivalDate: "",
     truckId: null,
     cargoType: "",
-    specialInstructions: "",  // New field for special instructions
+    specialInstructions: "", // New field for special instructions
   });
 
   const [drivers, setDrivers] = useState([]);
@@ -58,7 +58,7 @@ export default function CreateShipmentModal({
     async function fetchTrucks() {
       const availableTrucks = await apiClient.get(GET_AVAILABLE_TRUCK);
       setTrucks(availableTrucks.data.availableTrucks);
-      console.log("truck",availableTrucks.data.availableTrucks);
+      console.log("truck", availableTrucks.data.availableTrucks);
     }
     fetchTrucks();
   }, []);
@@ -66,7 +66,7 @@ export default function CreateShipmentModal({
   useEffect(() => {
     async function fetchClients() {
       const availableClients = await apiClient.get(GET_ALL_CLIENTS);
-      console.log("client",availableClients.data);
+      console.log("client", availableClients.data);
       setClients(availableClients.data);
     }
     fetchClients();
@@ -79,13 +79,12 @@ export default function CreateShipmentModal({
 
   const handleInputChange = (e) => {
     const { id, value } = e.target;
-    if(id === "cargoWeight") {
+    if (id === "cargoWeight") {
       setFormData((prevData) => ({
         ...prevData,
         [id]: parseInt(value, 10),
       }));
-    }else{
-
+    } else {
       setFormData((prevData) => ({
         ...prevData,
         [id]: value,
@@ -94,7 +93,7 @@ export default function CreateShipmentModal({
   };
 
   const handleSelectChange = (id, value) => {
-    console.log(id,value);
+    console.log(id, value);
     setFormData((prevData) => ({
       ...prevData,
       [id]: value,
@@ -127,28 +126,36 @@ export default function CreateShipmentModal({
             Create New Shipment
           </DialogTitle>
         </DialogHeader>
-       
+
         <form onSubmit={handleSubmit} className="space-y-4 p-4">
           <p className="text-sm text-muted-foreground">
             Enter the details for the new shipment.
           </p>
           <div className="space-y-2">
-             <Label htmlFor="clientId">Select Available client</Label>
-              <Select
-                onValueChange={(value) => handleSelectChange("clientId", parseInt(value, 10))}
-              >
-                <SelectTrigger id="clientId">
-                  <SelectValue placeholder="Select a client" />
-                </SelectTrigger>
-                <SelectContent>
-                  {clients.map((prop) => (
-                    <SelectItem key={prop.clientId} value={prop.clientId}>
-                      {prop.clientName} (ID: {prop.clientId})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            {errors.clientId && <p className="text-red-500 text-xs">{errors.clientId}</p>}
+            <Label htmlFor="clientId">Select Available client</Label>
+            <Select
+              value={formData.clientId?.toString()}
+              onValueChange={(value) =>
+                handleSelectChange("clientId", parseInt(value, 10))
+              }
+            >
+              <SelectTrigger id="clientId">
+                <SelectValue placeholder="Select a client" />
+              </SelectTrigger>
+              <SelectContent>
+                {clients.map((prop) => (
+                  <SelectItem
+                    key={prop.clientId}
+                    value={prop.clientId.toString()}
+                  >
+                    {prop.clientName} (ID: {prop.clientId})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {errors.clientId && (
+              <p className="text-red-500 text-xs">{errors.clientId}</p>
+            )}
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
@@ -159,7 +166,9 @@ export default function CreateShipmentModal({
                 value={formData.pickupLocation}
                 onChange={handleInputChange}
               />
-              {errors.pickupLocation && <p className="text-red-500 text-xs">{errors.pickupLocation}</p>}
+              {errors.pickupLocation && (
+                <p className="text-red-500 text-xs">{errors.pickupLocation}</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="deliveryLocation">Delivery Location</Label>
@@ -169,7 +178,11 @@ export default function CreateShipmentModal({
                 value={formData.deliveryLocation}
                 onChange={handleInputChange}
               />
-              {errors.deliveryLocation && <p className="text-red-500 text-xs">{errors.deliveryLocation}</p>}
+              {errors.deliveryLocation && (
+                <p className="text-red-500 text-xs">
+                  {errors.deliveryLocation}
+                </p>
+              )}
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -181,25 +194,35 @@ export default function CreateShipmentModal({
                 value={formData.cargoWeight}
                 onChange={handleInputChange}
               />
-              {errors.cargoWeight && <p className="text-red-500 text-xs">{errors.cargoWeight}</p>}
+              {errors.cargoWeight && (
+                <p className="text-red-500 text-xs">{errors.cargoWeight}</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="driverId">Select Available Driver</Label>
               <Select
-                onValueChange={(value) => handleSelectChange("driverId", parseInt(value, 10))}
+                value={formData.driverId?.toString()}
+                onValueChange={(value) =>
+                  handleSelectChange("driverId", parseInt(value, 10))
+                }
               >
                 <SelectTrigger id="driverId">
                   <SelectValue placeholder="Select a Driver" />
                 </SelectTrigger>
                 <SelectContent>
                   {drivers.map((driver) => (
-                    <SelectItem key={driver.driverId} value={driver.driverId}>
+                    <SelectItem
+                      key={driver.driverId}
+                      value={driver.driverId.toString()}
+                    >
                       {driver.name} (ID: {driver.driverId})
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
-              {errors.driverId && <p className="text-red-500 text-xs">{errors.driverId}</p>}
+              {errors.driverId && (
+                <p className="text-red-500 text-xs">{errors.driverId}</p>
+              )}
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
@@ -211,7 +234,9 @@ export default function CreateShipmentModal({
                 value={formData.departureDate}
                 onChange={handleInputChange}
               />
-              {errors.departureDate && <p className="text-red-500 text-xs">{errors.departureDate}</p>}
+              {errors.departureDate && (
+                <p className="text-red-500 text-xs">{errors.departureDate}</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="arrivalDate">Date of Arrival</Label>
@@ -221,14 +246,18 @@ export default function CreateShipmentModal({
                 value={formData.arrivalDate}
                 onChange={handleInputChange}
               />
-              {errors.arrivalDate && <p className="text-red-500 text-xs">{errors.arrivalDate}</p>}
+              {errors.arrivalDate && (
+                <p className="text-red-500 text-xs">{errors.arrivalDate}</p>
+              )}
             </div>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="truckId">Select Available Truck</Label>
               <Select
-                onValueChange={(value) => handleSelectChange("truckId", parseInt(value, 10))}
+                onValueChange={(value) =>
+                  handleSelectChange("truckId", parseInt(value, 10))
+                }
               >
                 <SelectTrigger id="truckId">
                   <SelectValue placeholder="Select a Truck" />
@@ -241,7 +270,9 @@ export default function CreateShipmentModal({
                   ))}
                 </SelectContent>
               </Select>
-              {errors.truckId && <p className="text-red-500 text-xs">{errors.truckId}</p>}
+              {errors.truckId && (
+                <p className="text-red-500 text-xs">{errors.truckId}</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="cargoType">Cargo Type</Label>
@@ -251,10 +282,12 @@ export default function CreateShipmentModal({
                 value={formData.cargoType}
                 onChange={handleInputChange}
               />
-              {errors.cargoType && <p className="text-red-500 text-xs">{errors.cargoType}</p>}
+              {errors.cargoType && (
+                <p className="text-red-500 text-xs">{errors.cargoType}</p>
+              )}
             </div>
           </div>
-          
+
           {/* New Special Instructions Field */}
           <div className="space-y-2">
             <Label htmlFor="specialInstructions">Special Instructions</Label>
@@ -264,9 +297,13 @@ export default function CreateShipmentModal({
               value={formData.specialInstructions}
               onChange={handleInputChange}
             />
-            {errors.specialInstructions && <p className="text-red-500 text-xs">{errors.specialInstructions}</p>}
+            {errors.specialInstructions && (
+              <p className="text-red-500 text-xs">
+                {errors.specialInstructions}
+              </p>
+            )}
           </div>
-          
+
           <div className="flex justify-end space-x-4">
             <Button type="submit">Create Shipment</Button>
           </div>
