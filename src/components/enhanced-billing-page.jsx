@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import {
   PlusCircle,
@@ -15,6 +15,10 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { apiClient } from "@/lib/api-client";
+
+import { GET_ALL_CLIENTS, CREATE_BILL, GET_ALL_BILLS, UPDATE_BILL } from "@/utils/constant";
+
 import {
   Table,
   TableBody,
@@ -49,70 +53,51 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { Sidebar } from "./Sidebar";
+import toast from "react-hot-toast";
 
 export function EnhancedBillingPageComponent() {
   // ... (useState and other logic remain the same)
 
-  const [bills, setBills] = useState([
-    {
-      id: 1,
-      clientName: "Acme Corp",
-      amount: 5000,
-      dueDate: "2023-07-15",
-      status: "Unpaid",
-      description: "Web development services",
-      createdAt: "2023-06-15",
-    },
-    {
-      id: 2,
-      clientName: "TechStart Inc",
-      amount: 3500,
-      dueDate: "2023-07-20",
-      status: "Paid",
-      description: "UI/UX design project",
-      createdAt: "2023-06-20",
-    },
-    {
-      id: 3,
-      clientName: "Global Solutions",
-      amount: 7500,
-      dueDate: "2023-07-25",
-      status: "Unpaid",
-      description: "Mobile app development",
-      createdAt: "2023-06-25",
-    },
-    {
-      id: 4,
-      clientName: "Innovate LLC",
-      amount: 6000,
-      dueDate: "2023-08-01",
-      status: "Paid",
-      description: "Cloud infrastructure setup",
-      createdAt: "2023-07-01",
-    },
-    {
-      id: 5,
-      clientName: "FutureTech",
-      amount: 4500,
-      dueDate: "2023-08-05",
-      status: "Unpaid",
-      description: "AI integration project",
-      createdAt: "2023-07-05",
-    },
-  ]);
+  const [bills, setBills] = useState([]);
+
   const [isOpen, setIsOpen] = useState(false);
   const [newBill, setNewBill] = useState({
+    clientId: "", // Added clientId
     clientName: "",
     amount: 0,
     dueDate: "",
-    status: "Unpaid",
+    paymentStatus: "",
     description: "",
-    payment : "",
+    paymentMethod: "",
   });
   const [searchTerm, setSearchTerm] = useState("");
   const [sortOrder, setSortOrder] = useState("asc");
   const [statusFilter, setStatusFilter] = useState("All");
   const [selectedBill, setSelectedBill] = useState(null);
+  const [clients, setClients] = useState([]);
+
+  useEffect(() => {
+    async function fetchClients() {
+      const availableClients = await apiClient.get(GET_ALL_CLIENTS);
+      console.log(availableClients.data);
+      setClients(availableClients.data);
+    }
+    fetchClients();
+  }, []);
+
+  useEffect(() => {
+    const fetchBills = async () => {
+      try {
+        const response = await apiClient.get(GET_ALL_BILLS);
+        console.log(response);
+        setBills(response.data);
+      } catch (error) {
+        console.error("Error fetching Bills data:", error);
+      }
+    };
+
+    fetchBills();
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -122,20 +107,124 @@ export function EnhancedBillingPageComponent() {
     }));
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const newId = Math.max(...bills.map((bill) => bill.id)) + 1;
-    const createdAt = new Date().toISOString().split("T")[0];
-    setBills((prev) => [...prev, { ...newBill, id: newId, createdAt }]);
-    setIsOpen(false);
-    setNewBill({
-      clientName: "",
-      amount: 0,
-      dueDate: "",
-      status: "Unpaid",
-      description: "",
+  const handleClientChange = (value) => {
+    const selectedClient = clients.find(
+      (client) => client.clientId.toString() === value.toString()
+    );
 
+    // Update both clientId and clientName
+    handleInputChange({
+      target: { name: "clientId", value: value },
     });
+    handleInputChange({
+      target: { name: "clientName", value: selectedClient?.clientName || "" },
+    });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (
+      !newBill.clientId ||
+      !newBill.ShipmentName ||
+      !newBill.amount ||
+      !newBill.dueDate ||
+      !newBill.paymentMethod ||
+      !newBill.paymentStatus ||
+      !newBill.description
+    ) {
+      toast.error("All fields are required");
+    }
+
+    try {
+      const response = await apiClient.post(CREATE_BILL, newBill);
+
+      if (response.status === 201) {
+        // Show success toast
+        toast.success("Bill created successfully!");
+        setBills([...bills, response.data.bill]);
+      }
+
+      console.log("Bill added successfully:", response.data);
+
+      // Optionally close the dialog and reset form
+      setIsOpen(false);
+      setNewBill({
+        clientName: "",
+        amount: 0,
+        dueDate: "",
+        status: "Unpaid",
+        description: "",
+      });
+    } catch (error) {
+      console.error("Error adding driver:", error);
+    }
+
+    console.log(newBill);
+    // const newId = Math.max(...bills.map((bill) => bill.id)) + 1;
+    // const createdAt = new Date().toISOString().split("T")[0];
+    // setBills((prev) => [...prev, { ...newBill, id: newId, createdAt }]);
+    // setIsOpen(false);
+    // setNewBill({
+    //   clientName: "",
+    //   amount: 0,
+    //   dueDate: "",
+    //   status: "Unpaid",
+    //   description: "",
+    // });
+  };
+
+  const handleUpdateBill = async (e) =>{
+    e.preventDefault();
+
+    const updatedBillData = {};
+
+    if (newBill.paymentStatus)
+      updatedBillData.paymentStatus = newBill.paymentStatus;
+    
+    if(newBill.dueDate)
+      updatedBillData.dueDate = newBill.dueDate;
+
+    if(newBill.amount)
+      updatedBillData.amount = newBill.amount;
+
+    if (Object.keys(updatedBillData).length === 0) {
+      toast.error("Please provide at least one field to update.");
+      return;
+    }
+
+    try {
+      const response = await apiClient.put(
+        UPDATE_BILL.replace(":id", selectedBill.billId),
+        updatedBillData
+      );
+
+      if (response.status === 200) {
+        toast.success("Bill updated successfully!");
+        console.log(response)
+        setBills((prevBill) =>
+          prevBill.map((bill) =>
+            bill.billId === selectedBill.billId
+              ? { ...bill, ...response.data}
+              : bill
+          )
+        );
+
+        setSelectedBill(null); // Close dialog
+        setNewBill({
+          clientName: "",
+          amount: 0,
+          dueDate: "",
+          status: "",
+          description: "",
+        });
+      }
+    }  catch (error) {
+      console.error("Error updating Bill:", error);
+      toast.error("Failed to update Bill.");
+    }
+
+
   };
 
   const filteredAndSortedBills = useMemo(() => {
@@ -143,7 +232,7 @@ export function EnhancedBillingPageComponent() {
       .filter(
         (bill) =>
           bill.clientName.toLowerCase().includes(searchTerm.toLowerCase()) &&
-          (statusFilter === "All" || bill.status === statusFilter)
+          (statusFilter === "All" || bill.paymentStatus === statusFilter)
       )
       .sort((a, b) =>
         sortOrder === "asc" ? a.amount - b.amount : b.amount - a.amount
@@ -161,14 +250,17 @@ export function EnhancedBillingPageComponent() {
   const totalPaid = useMemo(
     () =>
       bills
-        .filter((bill) => bill.status === "Paid")
+        .filter(
+          (bill) =>
+            bill.paymentStatus === "paid" || bill.paymentStatus === "overdue"
+        )
         .reduce((sum, bill) => sum + bill.amount, 0),
     [bills]
   );
   const totalUnpaid = useMemo(
     () =>
       bills
-        .filter((bill) => bill.status === "Unpaid")
+        .filter((bill) => bill.paymentStatus === "pending")
         .reduce((sum, bill) => sum + bill.amount, 0),
     [bills]
   );
@@ -271,8 +363,8 @@ export function EnhancedBillingPageComponent() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="All">All</SelectItem>
-                <SelectItem value="Paid">Paid</SelectItem>
-                <SelectItem value="Unpaid">Unpaid</SelectItem>
+                <SelectItem value="paid">Paid</SelectItem>
+                <SelectItem value="pending">Unpaid</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -294,13 +386,33 @@ export function EnhancedBillingPageComponent() {
                 </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4">
-                <Input
-                  name="clientName"
-                  placeholder="Client Name"
-                  value={newBill.clientName}
-                  onChange={handleInputChange}
-                  required
-                />
+                <div className="space-y-2">
+                  <Label htmlFor="clientId">Select Client</Label>
+                  <Select
+                    value={newBill.clientId}
+                    onValueChange={handleClientChange}
+                  >
+                    <SelectTrigger id="clientId">
+                      <SelectValue placeholder="Select a Client">
+                        {clients.find(
+                          (client) =>
+                            client.clientId.toString() === newBill.clientId
+                        )?.clientName || "Select a Client"}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {clients.map((client) => (
+                        <SelectItem
+                          key={client.clientId}
+                          value={client.clientId}
+                        >
+                          {client.clientName}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 <Input
                   name="ShipmentName"
                   placeholder="Shipment Name"
@@ -311,7 +423,7 @@ export function EnhancedBillingPageComponent() {
                 <Input
                   name="amount"
                   type="number"
-                  placeholder="Amount"
+                  placeholder="Total Amount"
                   value={newBill.amount}
                   onChange={handleInputChange}
                   required
@@ -325,33 +437,34 @@ export function EnhancedBillingPageComponent() {
                   required
                 />
                 <Select
-                  name="status"
+                  name="paymentStatus"
                   onValueChange={(value) =>
-                    setNewBill((prev) => ({ ...prev, status: value }))
+                    setNewBill((prev) => ({ ...prev, paymentStatus: value }))
                   }
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select status" />
+                    <SelectValue placeholder="Select payment Status" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Paid">Paid</SelectItem>
-                    <SelectItem value="Unpaid">Unpaid</SelectItem>
+                    <SelectItem value="paid">Paid</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="overdue">Overdue</SelectItem>
                   </SelectContent>
                 </Select>
 
                 <Select
-                  name="Payment"
+                  name="paymentMethod"
                   onValueChange={(value) =>
-                    setNewBill((prev) => ({ ...prev, payment: value }))
+                    setNewBill((prev) => ({ ...prev, paymentMethod: value }))
                   }
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select Payment Method" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Paid">Card</SelectItem>
-                    <SelectItem value="Unpaid">Bank Transfer</SelectItem>
-                    <SelectItem value="Unpaid">Cash</SelectItem>
+                    <SelectItem value="card">Card</SelectItem>
+                    <SelectItem value="bank transfer">Bank Transfer</SelectItem>
+                    <SelectItem value="cash">Cash</SelectItem>
                   </SelectContent>
                 </Select>
 
@@ -403,16 +516,23 @@ export function EnhancedBillingPageComponent() {
                   <TableCell className="text-left px-8">
                     ${bill.amount.toFixed(2)}
                   </TableCell>
-                  <TableCell className="text-left">{bill.dueDate}</TableCell>
+                  <TableCell className="text-left">
+                    {new Intl.DateTimeFormat("en-GB", {
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                    }).format(new Date(bill.dueDate))}
+                  </TableCell>
+
                   <TableCell className="text-left">
                     <span
                       className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                        bill.status === "Paid"
+                        bill.paymentStatus === "paid"
                           ? "bg-green-100 text-green-800"
                           : "bg-red-100 text-red-800"
                       }`}
                     >
-                      {bill.status}
+                      {bill.paymentStatus}
                     </span>
                   </TableCell>
                 </TableRow>
@@ -436,28 +556,45 @@ export function EnhancedBillingPageComponent() {
                 </div>
                 <div>
                   <h3 className="font-semibold">Amount</h3>
-                  <p>${selectedBill.amount.toFixed(2)}</p>
+                  <p>₹ {selectedBill.amount.toFixed(2)}</p>
                 </div>
                 <div>
                   <h3 className="font-semibold">Due Date</h3>
-                  <p>{selectedBill.dueDate}</p>
+                  <p>
+                    {new Intl.DateTimeFormat("en-GB", {
+                      day: "numeric",
+                      month: "long",
+                      year: "numeric",
+                    }).format(new Date(selectedBill.dueDate))}
+                  </p>
                 </div>
+
                 <div>
                   <h3 className="font-semibold">Status</h3>
-                  <p>{selectedBill.status}</p>
-                </div>
-                <div>
-                  <h3 className="font-semibold">Description</h3>
-                  <p>{selectedBill.description}</p>
+                  <span
+                    className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                      selectedBill.paymentStatus === "paid"
+                        ? "bg-green-100 text-green-800"
+                        : "bg-red-100 text-red-800"
+                    }`}
+                  >
+                    {selectedBill.paymentStatus}
+                  </span>
                 </div>
                 <div className="flex gap-x-52">
                   <div>
-                  <h3 className="font-semibold">Created At</h3>
-                  <p>{selectedBill.createdAt}</p>
+                    <h3 className="font-semibold">Created At</h3>
+                    <p>
+                      {new Intl.DateTimeFormat("en-GB", {
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                      }).format(new Date(selectedBill.createdAt))}
+                    </p>
                   </div>
 
                   <div>
-                  <Dialog>
+                    <Dialog>
                       <DialogTrigger asChild>
                         <Button className="bg-black hover:bg-gray-800 text-white mt-2">
                           <Pen className="mr-2 h-4 w-4" /> Update Bill
@@ -468,38 +605,77 @@ export function EnhancedBillingPageComponent() {
                         <DialogHeader>
                           <DialogTitle>Update Bill</DialogTitle>
                           <DialogDescription>
-                            Enter the details you want to update. <br/>Click save
-                            when you're done.
+                            Enter the details you want to update. <br />
+                            Click save when you're done.
                           </DialogDescription>
                         </DialogHeader>
 
-                        <form className="grid gap-4 py-4">
-                          
+                        <form className="grid gap-4 py-4" onSubmit={handleUpdateBill}>
                           <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="status" className="text-right">
+                            {/* Payment Status Label */}
+                            <Label
+                              htmlFor="paymentStatus"
+                              className="text-right"
+                            >
                               Payment Status
                             </Label>
-                            <Select>
+
+                            {/* Payment Status Select */}
+                            <Select
+                              name="paymentStatus"
+                              onValueChange={(value) =>
+                                setNewBill((prev) => ({
+                                  ...prev,
+                                  paymentStatus: value,
+                                }))
+                              }
+                            >
                               <SelectTrigger className="col-span-3">
-                                <SelectValue placeholder="Select status" />
+                                {" "}
+                                {/* Make the trigger span 3 columns */}
+                                <SelectValue placeholder="Select payment Status" />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="available">
-                                  Paid
-                                </SelectItem>
-                                <SelectItem value="On Trip">
-                                   UnPaid
-                                </SelectItem>
-
+                                <SelectItem value="paid">Paid</SelectItem>
+                                <SelectItem value="pending">Pending</SelectItem>
+                                <SelectItem value="overdue">Overdue</SelectItem>
                               </SelectContent>
                             </Select>
                           </div>
 
                           <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="Salary" className="text-right">
-                            Additional Note
+                            {/* Due Date Label */}
+                            <Label htmlFor="dueDate" className="text-right">
+                              Due Date
                             </Label>
-                            <Input id="Salary" type = "text" className="col-span-3" />
+
+                            {/* Due Date Input */}
+                            <Input
+                              name="dueDate"
+                              id="dueDate" // Add id for better accessibility
+                              type="date"
+                              className="col-span-3" // Make the input span 3 columns for alignment
+                              value={newBill.dueDate}
+                              onChange={handleInputChange}
+                            />
+                          </div>
+
+                          <div className="grid grid-cols-4 items-center gap-4">
+                            {/* Total Amount Label */}
+                            <Label htmlFor="amount" className="text-right">
+                              Total Amount
+                            </Label>
+
+                            {/* Total Amount Input */}
+                            <Input
+                              name="amount"
+                              id="amount" // Add id for better accessibility
+                              type="number"
+                              placeholder="Total Amount"
+                              className="col-span-3" // Make the input span 3 columns for alignment
+                              value={newBill.amount}
+                              onChange={handleInputChange}
+                            />
                           </div>
 
                           <Button
@@ -513,8 +689,6 @@ export function EnhancedBillingPageComponent() {
                     </Dialog>
                   </div>
                 </div>
-
-
               </div>
             )}
           </DialogContent>
