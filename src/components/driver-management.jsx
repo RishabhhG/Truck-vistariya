@@ -17,6 +17,7 @@ import {
   TicketSlash,
   CalendarDays,
   Pen,
+  CircleGauge,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -348,10 +349,9 @@ export function DriverManagementComponent() {
               <Truck className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
+              <div className="text-2xl font-bold">  
                 {
-                  drivers.filter((d) => d.availabilityStatus === "Available")
-                    .length
+                  Array.isArray(drivers) ? drivers.filter((d) => d.availabilityStatus === "Available").length : 0
                 }
               </div>
               <p className="text-xs text-muted-foreground">
@@ -368,9 +368,9 @@ export function DriverManagementComponent() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {(
+                {Array.isArray(drivers) ? (
                   drivers.reduce((acc, d) => acc + d.rating, 0) / drivers.length
-                ).toFixed(2)}
+                ).toFixed(2) : 0}
               </div>
               <Progress value={85} className="mt-2" />
             </CardContent>
@@ -417,7 +417,7 @@ export function DriverManagementComponent() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredDrivers.map((driver) => (
+                {filteredDrivers.length > 0 ? filteredDrivers.map((driver) => (
                   <TableRow
                     key={driver.id}
                     onClick={() => setSelectedDriver(driver)}
@@ -460,7 +460,18 @@ export function DriverManagementComponent() {
                       </div>
                     </TableCell>
                   </TableRow>
-                ))}
+                ))
+                :
+                <TableRow
+                    className="cursor-pointer transition-colors hover:bg-muted/50"
+                  >
+                   <TableCell className="text-center"></TableCell>
+                   <TableCell className="text-center"></TableCell>
+                   <TableCell className="text-center">{`No Data Available`}</TableCell>
+                   <TableCell className="text-center"></TableCell>
+                   <TableCell className="text-center"></TableCell>
+                </TableRow>
+              }
               </TableBody>
             </Table>
           </div>
