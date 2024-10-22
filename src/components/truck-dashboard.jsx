@@ -236,27 +236,50 @@ export function TruckDashboard() {
 
     try {
       const response = await apiClient.put(
-        UPDATE_TRUCK.replace(":truckId", selectedTruck.truckId), // Ensure selectedTruck is defined
+        UPDATE_TRUCK.replace(":truckId", selectedTruck.truckId),
         updatedTruckData
       );
 
       if (response.status === 200) {
         toast.success("Truck updated successfully!");
+        const updatedTruck = response.data.truck;
+
+        // Update allTrucks state
         setAllTrucks((prevTrucks) =>
           prevTrucks.map((truck) =>
             truck.truckId === selectedTruck.truckId
-              ? { ...truck, ...response.data.truck }
+              ? { ...truck, ...updatedTruck }
               : truck
           )
         );
 
-        if (response.data.truck.availabilityStatus === "Available") {
-          // Remove the truck from onWayTrucks if its status changes to "Available"
+        // Handle onWayTrucks state based on availability status
+        if (updatedTruck.availabilityStatus === "Available") {
+          // Remove from onWayTrucks if status is Available
           setOnWayTrucks((prevOnWayTrucks) =>
             prevOnWayTrucks.filter(
-              (truck) => truck.truckId !== response.data.truck.truckId
+              (truck) => truck.truckId !== updatedTruck.truckId
             )
           );
+        } else if (updatedTruck.availabilityStatus === "Not Available") {
+          // Add to onWayTrucks if status is Unavailable
+          setOnWayTrucks((prevOnWayTrucks) => {
+            // Check if truck is already in onWayTrucks
+            const truckExists = prevOnWayTrucks.some(
+              (truck) => truck.truckId === updatedTruck.truckId
+            );
+            
+            // Only add if it doesn't already exist
+            if (!truckExists) {
+              return [...prevOnWayTrucks, updatedTruck];
+            }
+            // If it exists, update its information
+            return prevOnWayTrucks.map((truck) =>
+              truck.truckId === updatedTruck.truckId
+                ? { ...truck, ...updatedTruck }
+                : truck
+            );
+          });
         }
 
         setSelectedTruck(null); // Close dialog
@@ -266,8 +289,7 @@ export function TruckDashboard() {
       console.error("Error updating truck:", error);
       toast.error("Failed to update truck.");
     }
-  };
-
+};
   const filteredTrucks = Array.isArray(allTrucks)
     ? allTrucks.filter(
         (truck) =>
@@ -542,7 +564,7 @@ export function TruckDashboard() {
                               <DialogContent className="bg-white max-w-md w-full">
                                 <DialogHeader>
                                   <DialogTitle className="text-xl md:text-2xl font-bold text-gray-800">
-                                    {truck.name} Details
+                                    {truck.registrationNumber} Details
                                   </DialogTitle>
                                   <DialogDescription>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">

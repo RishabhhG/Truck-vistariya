@@ -413,7 +413,7 @@ export function DriverManagementComponent() {
                   <TableHead className="text-center">Availability</TableHead>
                   <TableHead className="text-center">License</TableHead>
                   <TableHead className="text-center">Experience</TableHead>
-                  <TableHead>Rating</TableHead>
+                  <TableHead>Salary</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -455,8 +455,8 @@ export function DriverManagementComponent() {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center">
-                        <Star className="w-4 h-4 fill-yellow-400 text-yellow-400 mr-1" />
-                        <span>{driver.rating}</span>
+                        
+                        <span>₹ {driver.salary}</span>
                       </div>
                     </TableCell>
                   </TableRow>
