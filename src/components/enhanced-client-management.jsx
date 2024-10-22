@@ -32,7 +32,11 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { apiClient } from "@/lib/api-client";
-import { CREATE_CLIENT, GET_ALL_CLIENTS, UPDATE_CLIENT } from "@/utils/constant";
+import {
+  CREATE_CLIENT,
+  GET_ALL_CLIENTS,
+  UPDATE_CLIENT,
+} from "@/utils/constant";
 import {
   Menu,
   Users,
@@ -81,7 +85,7 @@ export function EnhancedClientManagement() {
         setclients(response.data);
       } catch (error) {
         console.error("Error fetching Client data:", error);
-      }finally {
+      } finally {
         setLoading(false); // Stop loading when data fetching completes
       }
     };
@@ -174,7 +178,7 @@ export function EnhancedClientManagement() {
         setclients((prevClient) =>
           prevClient.map((client) =>
             client.clientId === selectedClient.clientId
-              ? { ...client, ...response.data.client}
+              ? { ...client, ...response.data.client }
               : client
           )
         );
@@ -402,228 +406,257 @@ export function EnhancedClientManagement() {
         </div>
 
         <div>
-
-        {loading ? ( // Conditional rendering for loading state
-              <div className="flex justify-center items-center">
-                <ClimbingBoxLoader />
-              </div> // Display this when loading is true
-            ) : (
-        <Tabs defaultValue="table" className="space-y-4">
-          <TabsContent value="table" className="space-y-4">
-            
-            <div className="overflow-x-auto">
-
-              
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    {[
-                      { key: "name", label: "Client" },
-                      { key: "status", label: "Status" },
-                      { key: "industry", label: "Industry" },
-                      { key: "projects", label: "Projects" },
-                      { key: "totalValue", label: "Total Value" },
-                      { key: "rating", label: "Rating" },
-                    ].map((column) => (
-                      <TableHead
-                        key={column.key}
-                        onClick={() => handleSort(column.key)}
-                        className="cursor-pointer whitespace-nowrap"
-                        aria-sort={
-                          sortColumn === column.key ? sortDirection : "none"
-                        }
-                      >
-                        {column.label}{" "}
-                        {sortColumn === column.key &&
-                          (sortDirection === "asc" ? "▲" : "▼")}
-                      </TableHead>
-                    ))}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredClients.map((client) => (
-                    <TableRow
-                      key={client.id}
-                      className="cursor-pointer hover:bg-muted/50"
-                      onClick={() => setSelectedClient(client)}
-                    >
-                      <TableCell className="font-medium text-left">
-                        {client.clientName}
-                      </TableCell>
-                      <TableCell className="text-left">
-                        {renderStatusBadge(client.status)}
-                      </TableCell>
-                      <TableCell className="text-left">
-                        {client.industry}
-                      </TableCell>
-                      {/* <TableCell className="text-left">
+          {loading ? ( // Conditional rendering for loading state
+            <div className="flex justify-center items-center">
+              <ClimbingBoxLoader />
+            </div> // Display this when loading is true
+          ) : (
+            <Tabs defaultValue="table" className="space-y-4">
+              <TabsContent value="table" className="space-y-4">
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        {[
+                          { key: "name", label: "Client" },
+                          { key: "status", label: "Status" },
+                          { key: "industry", label: "Industry" },
+                          { key: "projects", label: "Projects" },
+                          { key: "totalValue", label: "Total Value" },
+                          { key: "rating", label: "Rating" },
+                        ].map((column) => (
+                          <TableHead
+                            key={column.key}
+                            onClick={() => handleSort(column.key)}
+                            className="cursor-pointer whitespace-nowrap"
+                            aria-sort={
+                              sortColumn === column.key ? sortDirection : "none"
+                            }
+                          >
+                            {column.label}{" "}
+                            {sortColumn === column.key &&
+                              (sortDirection === "asc" ? "▲" : "▼")}
+                          </TableHead>
+                        ))}
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {filteredClients.map((client) => (
+                        <TableRow
+                          key={client.id}
+                          className="cursor-pointer hover:bg-muted/50"
+                          onClick={() => setSelectedClient(client)}
+                        >
+                          <TableCell className="font-medium text-left">
+                            {client.clientName}
+                          </TableCell>
+                          <TableCell className="text-left">
+                            {renderStatusBadge(client.status)}
+                          </TableCell>
+                          <TableCell className="text-left">
+                            {client.industry}
+                          </TableCell>
+                          {/* <TableCell className="text-left">
                         {client.projects}
                       </TableCell>
                       <TableCell className="text-left">
                         ₹{client.totalValue.toLocaleString()}
                       </TableCell>
                       <TableCell>{renderRating(client.rating)}</TableCell> */}
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-            {selectedClient && (
-              <Dialog
-                open={!!selectedClient}
-                onOpenChange={() => setSelectedClient(null)}
-              >
-                <DialogContent className="sm:max-w-[425px]">
-                  <DialogHeader>
-                    <DialogTitle>{selectedClient.clientName}</DialogTitle>
-                  </DialogHeader>
-                  <div className="grid grid-cols-2 gap-4 mt-4">
-                    <div className="flex items-center font-bold text-black gap-2">
-                      <Label className="text-right font-semibold">Status</Label>
-                      <div className="col-span-3">
-                        {renderStatusBadge(selectedClient.status)}
-                      </div>
-                    </div>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+                {selectedClient && (
+                  <Dialog
+                    open={!!selectedClient}
+                    onOpenChange={() => setSelectedClient(null)}
+                  >
+                    <DialogContent className="sm:max-w-[500px] p-6">
+                      <DialogHeader className="mb-6">
+                        <DialogTitle className="text-2xl font-bold tracking-tight">
+                          {selectedClient.clientName}
+                        </DialogTitle>
+                      </DialogHeader>
 
-                    <div className="flex items-center">
-                      <Building2 className="w-4 h-4  text-black mr-2" />
-                      <span className="font-semibold mr-1">Company :</span>{" "}
-                      {selectedClient.companyName}
-                    </div>
+                      <div className="space-y-6">
+                        {/* Status Section */}
+                        <div className="flex items-center justify-between bg-gray-50 p-4 rounded-lg">
+                          <span className="text-sm font-medium text-gray-600">
+                            Status
+                          </span>
+                          {renderStatusBadge(selectedClient.status)}
+                        </div>
 
-                    <div className="flex items-center">
-                      <Mail className="w-4 h-4 text-black mr-2 mt-1" />
-                      <span className="font-semibold mr-1"></span>{" "}
-                      {selectedClient.email}
-                    </div>
-
-                    <div className="flex items-center">
-                      <PhoneOutgoing className="w-4 h-4 text-black mr-2 mt-1" />
-                      <span className="font-semibold mr-1">Phone :</span>{" "}
-                      {selectedClient.phoneNumber}
-                    </div>
-
-                    <div className="flex items-center">
-                      <Factory className="w-4 h-4 text-black mr-2" />
-                      <span className="font-semibold mr-1">
-                        Industry :
-                      </span>{" "}
-                      {selectedClient.industry}
-                    </div>
-
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button className="bg-black hover:bg-gray-800 text-white mt-1">
-                          <Pen className="mr-3 h-4 w-4" /> Update Truck
-                        </Button>
-                      </DialogTrigger>
-
-                      <DialogContent className="sm:max-w-[425px]">
-                        <DialogHeader>
-                          <DialogTitle>Update Client</DialogTitle>
-                          <DialogDescription>
-                            Enter the details only you want to update.
-                            <br />
-                            Click save when you're done.
-                          </DialogDescription>
-                        </DialogHeader>
-
-                        <form
-                          className="grid gap-4 py-4"
-                          onSubmit={handleUpdateClient}
-                        >
-                          <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="email" className="text-right">
-                              Email
-                            </Label>
-                            <Input
-                              id="email"
-                              name="email"
-                              value={formData.email}
-                              onChange={handleInputChange}
-                              placeholder="Enter Client's email"
-                              className="col-span-3"
-                            />
+                        {/* Client Details Grid */}
+                        <div className="grid grid-cols-1 gap-y-4">
+                          <div className="p-4 rounded-lg hover:bg-gray-50 transition-colors">
+                            <div className="flex items-center">
+                              <Building2 className="w-5 h-5 text-gray-600 mr-3" />
+                              <div>
+                                <div className="text-sm text-gray-500">
+                                  Company
+                                </div>
+                                <div className="font-medium">
+                                  {selectedClient.companyName}
+                                </div>
+                              </div>
+                            </div>
                           </div>
 
-                          <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="phoneNumber" className="text-right">
-                              Phone Number
-                            </Label>
-                            <Input
-                              id="phoneNumber"
-                              name="phoneNumber"
-                              value={formData.phoneNumber}
-                              onChange={handleInputChange}
-                              type="number"
-                              placeholder="Enter phone number"
-                              className="col-span-3"
-                            />
+                          <div className="p-4 rounded-lg hover:bg-gray-50 transition-colors">
+                            <div className="flex items-center">
+                              <Mail className="w-5 h-5 text-gray-600 mr-3" />
+                              <div>
+                                <div className="text-sm text-gray-500">
+                                  Email
+                                </div>
+                                <div className="font-medium">
+                                  {selectedClient.email}
+                                </div>
+                              </div>
+                            </div>
                           </div>
 
-                          <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="status" className="text-right">
-                              Status
-                            </Label>
-                            <Select
-                              onValueChange={(value) =>
-                                setFormData({ ...formData, status: value })
-                              }
-                              value={formData.status}
+                          <div className="p-4 rounded-lg hover:bg-gray-50 transition-colors">
+                            <div className="flex items-center">
+                              <PhoneOutgoing className="w-5 h-5 text-gray-600 mr-3" />
+                              <div>
+                                <div className="text-sm text-gray-500">
+                                  Phone
+                                </div>
+                                <div className="font-medium">
+                                  {selectedClient.phoneNumber}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="p-4 rounded-lg hover:bg-gray-50 transition-colors">
+                            <div className="flex items-center">
+                              <Factory className="w-5 h-5 text-gray-600 mr-3" />
+                              <div>
+                                <div className="text-sm text-gray-500">
+                                  Industry
+                                </div>
+                                <div className="font-medium">
+                                  {selectedClient.industry}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Update Dialog */}
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button className="w-full bg-black hover:bg-gray-800 text-white">
+                              <Pen className="mr-2 h-4 w-4" /> Update Truck
+                            </Button>
+                          </DialogTrigger>
+
+                          <DialogContent className="sm:max-w-[425px]">
+                            <DialogHeader>
+                              <DialogTitle className="text-xl font-bold mb-2">
+                                Update Client
+                              </DialogTitle>
+                              <DialogDescription className="text-gray-500">
+                                Enter the details only you want to update.
+                                <br />
+                                Click save when you're done.
+                              </DialogDescription>
+                            </DialogHeader>
+
+                            <form
+                              className="space-y-6 py-4"
+                              onSubmit={handleUpdateClient}
                             >
-                              <SelectTrigger className="col-span-3">
-                                <SelectValue placeholder="Select status" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="Active">Active</SelectItem>
-                                <SelectItem value="Inactive">
-                                  Inactive
-                                </SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
+                              <div className="space-y-4">
+                                <div className="grid grid-cols-4 items-center gap-4">
+                                  <Label
+                                    htmlFor="email"
+                                    className="text-right font-medium"
+                                  >
+                                    Email
+                                  </Label>
+                                  <Input
+                                    id="email"
+                                    name="email"
+                                    value={formData.email}
+                                    onChange={handleInputChange}
+                                    placeholder="Enter Client's email"
+                                    className="col-span-3"
+                                  />
+                                </div>
 
-                          <Button
-                            type="submit"
-                            className="bg-blue-500 hover:bg-blue-600 text-white"
-                          >
-                            Save Truck
-                          </Button>
-                        </form>
-                      </DialogContent>
-                    </Dialog>
+                                <div className="grid grid-cols-4 items-center gap-4">
+                                  <Label
+                                    htmlFor="phoneNumber"
+                                    className="text-right font-medium"
+                                  >
+                                    Phone
+                                  </Label>
+                                  <Input
+                                    id="phoneNumber"
+                                    name="phoneNumber"
+                                    value={formData.phoneNumber}
+                                    onChange={handleInputChange}
+                                    type="number"
+                                    placeholder="Enter phone number"
+                                    className="col-span-3"
+                                  />
+                                </div>
 
-                    {/* <div className="grid grid-cols-4 items-center gap-4">
-              <Label className="text-right font-semibold">Industry</Label>
-              <div className="col-span-3">{selectedClient.industry}</div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label className="text-right font-semibold">Projects</Label>
-              <div className="col-span-3">{selectedClient.projects}</div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label className="text-right font-semibold">Total Value</Label>
-              <div className="col-span-3">
-                ₹{selectedClient.totalValue.toLocaleString()}
-              </div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label className="text-right font-semibold">Rating</Label>
-              <div className="col-span-3">
-                {renderRating(selectedClient.rating)}
-              </div>
-            </div> */}
-                  </div>
-                </DialogContent>
-              </Dialog>
-            )}
-            ;
-          </TabsContent>
-        </Tabs>
-         )}
+                                <div className="grid grid-cols-4 items-center gap-4">
+                                  <Label
+                                    htmlFor="status"
+                                    className="text-right font-medium"
+                                  >
+                                    Status
+                                  </Label>
+                                  <Select
+                                    onValueChange={(value) =>
+                                      setFormData({
+                                        ...formData,
+                                        status: value,
+                                      })
+                                    }
+                                    value={formData.status}
+                                  >
+                                    <SelectTrigger className="col-span-3">
+                                      <SelectValue placeholder="Select status" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="Active">
+                                        Active
+                                      </SelectItem>
+                                      <SelectItem value="Inactive">
+                                        Inactive
+                                      </SelectItem>
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                              </div>
+
+                              <Button
+                                type="submit"
+                                className="w-full bg-blue-500 hover:bg-blue-600 text-white"
+                              >
+                                Save Changes
+                              </Button>
+                            </form>
+                          </DialogContent>
+                        </Dialog>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                )}
+                ;
+              </TabsContent>
+            </Tabs>
+          )}
         </div>
-
-
       </div>
     </div>
   );
