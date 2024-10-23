@@ -1,10 +1,10 @@
 import "./App.css";
 
-import { DashboardComponent } from "@/components/dashboard";
 import { TruckDashboard } from "@/components/truck-dashboard";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { ShipmentDashboardComponent } from "./components/shipment-dashboard";
 import { DriverManagementComponent } from "./components/driver-management";
+import { TransportDashboardComponent } from "./components/transport-dashboard";
 
 import { EnhancedClientManagement } from "./components/enhanced-client-management";
 import { EnhancedBillingPageComponent } from "./components/enhanced-billing-page";
@@ -22,7 +22,7 @@ function App() {
         <Routes>
           <Route path="/signup" element={<Signup />} />
           <Route path="/login" element={<Login />} />
-          <Route path="/" element={<DashboardComponent />} />
+          <Route path="/" element={<TransportDashboardComponent />} />
           <Route path="/ship" element={<ShipmentDashboardComponent />} />
 
           <Route path="/truck-info" element={<TruckDashboard />} />
