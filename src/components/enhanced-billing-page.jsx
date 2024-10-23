@@ -504,7 +504,7 @@ export function EnhancedBillingPageComponent() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredAndSortedBills.map((bill) => (
+              {filteredAndSortedBills.length > 0 ?filteredAndSortedBills.map((bill) => (
                 <TableRow
                   key={bill.id}
                   onClick={() => setSelectedBill(bill)}
@@ -536,7 +536,17 @@ export function EnhancedBillingPageComponent() {
                     </span>
                   </TableCell>
                 </TableRow>
-              ))}
+              )) :
+              <TableRow
+                  className="cursor-pointer hover:bg-accent hover:text-accent-foreground"
+                >
+                  <TableCell className="text-left"></TableCell>
+                  <TableCell className="text-left"></TableCell>
+                  <TableCell className="text-center">No data available</TableCell>
+                  <TableCell className="text-left"></TableCell>
+                  <TableCell className="text-left"></TableCell>
+                </TableRow>
+              }
             </TableBody>
           </Table>
         </Card>
