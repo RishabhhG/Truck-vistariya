@@ -17,7 +17,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { apiClient } from "@/lib/api-client";
 
-import { GET_ALL_CLIENTS, CREATE_BILL, GET_ALL_BILLS, UPDATE_BILL } from "@/utils/constant";
+import {
+  GET_ALL_CLIENTS,
+  CREATE_BILL,
+  GET_ALL_BILLS,
+  UPDATE_BILL,
+  GET_ALL_SHIPMENTS,
+} from "@/utils/constant";
 
 import {
   Table,
@@ -63,6 +69,7 @@ export function EnhancedBillingPageComponent() {
   const [isOpen, setIsOpen] = useState(false);
   const [newBill, setNewBill] = useState({
     clientId: "", // Added clientId
+    shipmentId: null,
     clientName: "",
     amount: 0,
     dueDate: "",
@@ -75,6 +82,16 @@ export function EnhancedBillingPageComponent() {
   const [statusFilter, setStatusFilter] = useState("All");
   const [selectedBill, setSelectedBill] = useState(null);
   const [clients, setClients] = useState([]);
+  const [shipment, setShipment] = useState([]);
+
+  useEffect(() => {
+    async function fetchShipments() {
+      const availableShipments = await apiClient.get(GET_ALL_SHIPMENTS);
+      console.log(availableShipments.data);
+      setShipment(availableShipments.data);
+    }
+    fetchShipments();
+  }, []);
 
   useEffect(() => {
     async function fetchClients() {
@@ -121,12 +138,21 @@ export function EnhancedBillingPageComponent() {
     });
   };
 
+  const handleShipmentChange = (value) => {
+    console.log("Selected Shipment ID:", value); // Debugging log
+    setNewBill((prevState) => ({
+      ...prevState,
+      shipmentId: Number(value), // Convert to number if necessary
+    }));
+  };
+  
+  
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+  
     if (
       !newBill.clientId ||
-      !newBill.ShipmentName ||
       !newBill.amount ||
       !newBill.dueDate ||
       !newBill.paymentMethod ||
@@ -134,59 +160,53 @@ export function EnhancedBillingPageComponent() {
       !newBill.description
     ) {
       toast.error("All fields are required");
+      return; // Return early if validation fails
     }
-
+  
     try {
       const response = await apiClient.post(CREATE_BILL, newBill);
-
+  
       if (response.status === 201) {
         // Show success toast
         toast.success("Bill created successfully!");
-        setBills([...bills, response.data.bill]);
+        // Assuming the API returns the complete bill object
+        const createdBill = {
+          ...response.data.bill,
+          clientName: clients.find(client => client.clientId === newBill.clientId)?.clientName || "Unknown"
+        };
+        setBills([...bills, createdBill]);
       }
-
+  
       console.log("Bill added successfully:", response.data);
-
+  
       // Optionally close the dialog and reset form
       setIsOpen(false);
       setNewBill({
-        clientName: "",
+        clientId: "",
+        clientName: "", // Reset clientName
         amount: 0,
         dueDate: "",
-        status: "Unpaid",
+        paymentMethod: "",
+        paymentStatus: "Unpaid",
         description: "",
       });
     } catch (error) {
-      console.error("Error adding driver:", error);
+      console.error("Error adding bill:", error);
     }
-
-    console.log(newBill);
-    // const newId = Math.max(...bills.map((bill) => bill.id)) + 1;
-    // const createdAt = new Date().toISOString().split("T")[0];
-    // setBills((prev) => [...prev, { ...newBill, id: newId, createdAt }]);
-    // setIsOpen(false);
-    // setNewBill({
-    //   clientName: "",
-    //   amount: 0,
-    //   dueDate: "",
-    //   status: "Unpaid",
-    //   description: "",
-    // });
   };
+  
 
-  const handleUpdateBill = async (e) =>{
+  const handleUpdateBill = async (e) => {
     e.preventDefault();
 
     const updatedBillData = {};
 
     if (newBill.paymentStatus)
       updatedBillData.paymentStatus = newBill.paymentStatus;
-    
-    if(newBill.dueDate)
-      updatedBillData.dueDate = newBill.dueDate;
 
-    if(newBill.amount)
-      updatedBillData.amount = newBill.amount;
+    if (newBill.dueDate) updatedBillData.dueDate = newBill.dueDate;
+
+    if (newBill.amount) updatedBillData.amount = newBill.amount;
 
     if (Object.keys(updatedBillData).length === 0) {
       toast.error("Please provide at least one field to update.");
@@ -201,11 +221,11 @@ export function EnhancedBillingPageComponent() {
 
       if (response.status === 200) {
         toast.success("Bill updated successfully!");
-        console.log(response)
+        console.log(response);
         setBills((prevBill) =>
           prevBill.map((bill) =>
             bill.billId === selectedBill.billId
-              ? { ...bill, ...response.data}
+              ? { ...bill, ...response.data }
               : bill
           )
         );
@@ -219,25 +239,26 @@ export function EnhancedBillingPageComponent() {
           description: "",
         });
       }
-    }  catch (error) {
+    } catch (error) {
       console.error("Error updating Bill:", error);
       toast.error("Failed to update Bill.");
     }
-
-
   };
 
   const filteredAndSortedBills = useMemo(() => {
     return bills
-      .filter(
-        (bill) =>
-          bill.clientName.toLowerCase().includes(searchTerm.toLowerCase()) &&
-          (statusFilter === "All" || bill.paymentStatus === statusFilter)
-      )
-      .sort((a, b) =>
-        sortOrder === "asc" ? a.amount - b.amount : b.amount - a.amount
-      );
+      .filter((bill) => {
+        const clientName = bill.clientName || ""; // Default to empty string if undefined
+        return clientName.toLowerCase().includes(searchTerm.toLowerCase()) &&
+          (statusFilter === "All" || bill.paymentStatus === statusFilter);
+      })
+      .sort((a, b) => {
+        const amountA = Number(a.amount);
+        const amountB = Number(b.amount);
+        return sortOrder === "asc" ? amountA - amountB : amountB - amountA;
+      });
   }, [bills, searchTerm, sortOrder, statusFilter]);
+  
 
   const toggleSortOrder = () => {
     setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
@@ -413,13 +434,29 @@ export function EnhancedBillingPageComponent() {
                   </Select>
                 </div>
 
-                <Input
-                  name="ShipmentName"
-                  placeholder="Shipment Name"
-                  value={newBill.ShipmentName}
-                  onChange={handleInputChange}
-                  required
-                />
+                <div className="space-y-2">
+  <Label htmlFor="shipmentId">Select Shipment</Label>
+  <Select
+    value={newBill.shipmentId} // Ensure this points to shipmentId
+    onValueChange={handleShipmentChange}
+  >
+    <SelectTrigger id="shipmentId">
+      <SelectValue placeholder="Select a Shipment">
+        {shipment.find(item => item.shipmentId === newBill.shipmentId)?.shipmentName || "Select a Shipment"}
+      </SelectValue>
+    </SelectTrigger>
+    <SelectContent>
+      {shipment.map(item => (
+        <SelectItem key={item.shipmentId} value={item.shipmentId}>
+          {item.shipmentName}
+        </SelectItem>
+      ))}
+    </SelectContent>
+  </Select>
+</div>
+
+
+
                 <Input
                   name="amount"
                   type="number"
@@ -504,49 +541,51 @@ export function EnhancedBillingPageComponent() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredAndSortedBills.length > 0 ?filteredAndSortedBills.map((bill) => (
-                <TableRow
-                  key={bill.id}
-                  onClick={() => setSelectedBill(bill)}
-                  className="cursor-pointer hover:bg-accent hover:text-accent-foreground"
-                >
-                  <TableCell className="font-medium text-left">
+              {filteredAndSortedBills.length > 0 ? (
+                filteredAndSortedBills.map((bill) => (
+                  <TableRow
+                    key={bill.id}
+                    onClick={() => setSelectedBill(bill)}
+                    className="cursor-pointer hover:bg-accent hover:text-accent-foreground"
+                  >
+                    <TableCell className="font-medium text-left">
                     {bill.clientName}
-                  </TableCell>
-                  <TableCell className="text-left px-8">
-                    ${bill.amount.toFixed(2)}
-                  </TableCell>
-                  <TableCell className="text-left">
-                    {new Intl.DateTimeFormat("en-GB", {
-                      day: "numeric",
-                      month: "long",
-                      year: "numeric",
-                    }).format(new Date(bill.dueDate))}
-                  </TableCell>
+                    </TableCell>
+                    <TableCell className="text-left px-8">
+                      ${bill.amount.toFixed(2)}
+                    </TableCell>
+                    <TableCell className="text-left">
+                      {new Intl.DateTimeFormat("en-GB", {
+                        day: "numeric",
+                        month: "long",
+                        year: "numeric",
+                      }).format(new Date(bill.dueDate))}
+                    </TableCell>
 
-                  <TableCell className="text-left">
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                        bill.paymentStatus === "paid"
-                          ? "bg-green-100 text-green-800"
-                          : "bg-red-100 text-red-800"
-                      }`}
-                    >
-                      {bill.paymentStatus}
-                    </span>
+                    <TableCell className="text-left">
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs font-semibold ${
+                          bill.paymentStatus === "paid"
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-red-800"
+                        }`}
+                      >
+                        {bill.paymentStatus}
+                      </span>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow className="cursor-pointer hover:bg-accent hover:text-accent-foreground">
+                  <TableCell className="text-left"></TableCell>
+                  <TableCell className="text-left"></TableCell>
+                  <TableCell className="text-center">
+                    No data available
                   </TableCell>
-                </TableRow>
-              )) :
-              <TableRow
-                  className="cursor-pointer hover:bg-accent hover:text-accent-foreground"
-                >
-                  <TableCell className="text-left"></TableCell>
-                  <TableCell className="text-left"></TableCell>
-                  <TableCell className="text-center">No data available</TableCell>
                   <TableCell className="text-left"></TableCell>
                   <TableCell className="text-left"></TableCell>
                 </TableRow>
-              }
+              )}
             </TableBody>
           </Table>
         </Card>
@@ -620,7 +659,10 @@ export function EnhancedBillingPageComponent() {
                           </DialogDescription>
                         </DialogHeader>
 
-                        <form className="grid gap-4 py-4" onSubmit={handleUpdateBill}>
+                        <form
+                          className="grid gap-4 py-4"
+                          onSubmit={handleUpdateBill}
+                        >
                           <div className="grid grid-cols-4 items-center gap-4">
                             {/* Payment Status Label */}
                             <Label

@@ -68,42 +68,6 @@ import ShipmentForm from "./Shipment-dialog";
 export function ShipmentDashboardComponent() {
   const [activeTab, setActiveTab] = useState("ongoing");
   const [shipments, setShipments] = useState([
-    {
-      id: 1,
-      name: "Shipment A",
-      clientName: "Acme Corp",
-      origin: "New York",
-      destination: "Los Angeles",
-      status: "In Transit",
-      paymentPending: 1000,
-      dateOfDispatch: "2023-06-01",
-      dateOfArrival: "2023-06-05",
-      driverPayment: 500,
-    },
-    {
-      id: 2,
-      name: "Shipment B",
-      clientName: "TechCo",
-      origin: "Chicago",
-      destination: "Miami",
-      status: "Pending",
-      paymentPending: 0,
-      dateOfDispatch: "2023-06-03",
-      dateOfArrival: new Date().toISOString().split("T")[0],
-      driverPayment: 600,
-    },
-    {
-      id: 3,
-      name: "Shipment C",
-      clientName: "GlobalTrade",
-      origin: "Seattle",
-      destination: "Boston",
-      status: "Delivered",
-      paymentPending: 0,
-      dateOfDispatch: "2023-05-28",
-      dateOfArrival: "2023-06-01",
-      driverPayment: 550,
-    },
   ]);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
   const [selectedShipment, setSelectedShipment] = useState(null);
@@ -113,11 +77,11 @@ export function ShipmentDashboardComponent() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Manage sidebar state
   const [createShipmentOpen, setCreateShipmentOpen] = useState(false)
   const statusColors = {
-    Delivered: "bg-green-500",
-    Delayed: "bg-red-500",
+    delivered: "bg-green-500",
+    cancelled: "bg-red-500",
     Available: "bg-green-500",
     "In Transit": "bg-blue-600",
-    Pending: "bg-yellow-500",
+    pending: "bg-yellow-500",
   };
 
   const form = useForm({
@@ -224,10 +188,10 @@ export function ShipmentDashboardComponent() {
           className="cursor-pointer hover:bg-gray-100"
           onClick={() => setSelectedShipment(shipment)}
         >
-          <TableCell className="font-medium text-left">{shipment.name}</TableCell>
+          <TableCell className="font-medium text-left">{shipment.shipmentName}</TableCell>
           <TableCell className = "text-left">{shipment.clientName}</TableCell>
-          <TableCell className = "text-left">{shipment.origin}</TableCell>
-          <TableCell className = "text-left">{shipment.destination}</TableCell>
+          <TableCell className = "text-left">{shipment.pickupLocation}</TableCell>
+          <TableCell className = "text-left">{shipment.deliveryLocation}</TableCell>
           <TableCell className = "text-left">
             <Badge className={`${statusColors[shipment.status]} text-white`}>
               {shipment.status}
@@ -236,10 +200,10 @@ export function ShipmentDashboardComponent() {
           <TableCell className = "text-left">₹{shipment.paymentPending}</TableCell>
           <TableCell className = "text-left">₹{shipment.driverPayment}</TableCell>
           <TableCell className = "text-left">
-            {format(parseISO(shipment.dateOfDispatch), "MMM dd, yyyy")}
+            {format(parseISO(shipment.departureDate), "MMM dd, yyyy")}
           </TableCell>
           <TableCell className = "text-left">
-            {format(parseISO(shipment.dateOfArrival), "MMM dd, yyyy")}
+            {format(parseISO(shipment.arrivalDate), "MMM dd, yyyy")}
           </TableCell>
         </TableRow>
       ))}
@@ -308,7 +272,7 @@ export function ShipmentDashboardComponent() {
           <Package /> {/* Replace with actual dispatch icon */}
         </span>
         <span className="font-semibold mr-2">Dispatch:</span>{" "}
-        {format(parseISO(shipment.dateOfDispatch), "MMM dd, yyyy")}
+        {/* {format(parseISO(shipment.dateOfDispatch), "MMM dd, yyyy")} */}
       </div>
 
       <div className="text-sm flex items-center">
@@ -316,7 +280,7 @@ export function ShipmentDashboardComponent() {
           <PlaneLanding /> {/* Replace with actual arrival icon */}
         </span>
         <span className="font-semibold">Arrival:</span>{" "}
-        {format(parseISO(shipment.dateOfArrival), "MMM dd, yyyy")}
+        {/* {format(parseISO(shipment.dateOfArrival), "MMM dd, yyyy")} */}
       </div>
     </div>
   ))}
@@ -381,7 +345,7 @@ export function ShipmentDashboardComponent() {
                     <Plus className="mr-2 h-4 w-4" />
                     New Shipment
                   </Button>
-                  <ShipmentForm createShipmentOpen={createShipmentOpen} setCreateShipmentOpen={setCreateShipmentOpen}></ShipmentForm>
+                  <ShipmentForm createShipmentOpen={createShipmentOpen} setCreateShipmentOpen={setCreateShipmentOpen} setShipments={setShipments}></ShipmentForm>
              
             </div>
             <Card>
@@ -444,7 +408,7 @@ export function ShipmentDashboardComponent() {
             >
               <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
-                  <DialogTitle>{selectedShipment.name}</DialogTitle>
+                  <DialogTitle>{selectedShipment.shipmentName}</DialogTitle>
                   <DialogDescription>Shipment Details</DialogDescription>
                 </DialogHeader>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -468,12 +432,12 @@ export function ShipmentDashboardComponent() {
                   </div>
                   <div>
                     <p className="font-semibold">Origin:</p>
-                    <p>{selectedShipment.origin}</p>
+                    <p>{selectedShipment.pickupLocation}</p>
                   </div>
                   <div>
                     <p className="font-semibold">Destination:</p>
 
-                    <p>{selectedShipment.destination}</p>
+                    <p>{selectedShipment.deliveryLocation}</p>
                   </div>
                   <div>
                     <p className="font-semibold">Payment Pending:</p>
@@ -487,7 +451,7 @@ export function ShipmentDashboardComponent() {
                     <p className="font-semibold">Dispatch Date:</p>
                     <p>
                       {format(
-                        parseISO(selectedShipment.dateOfDispatch),
+                        parseISO(selectedShipment.departureDate),
                         "MMM dd, yyyy"
                       )}
                     </p>
@@ -496,7 +460,7 @@ export function ShipmentDashboardComponent() {
                     <p className="font-semibold">Arrival Date:</p>
                     <p>
                       {format(
-                        parseISO(selectedShipment.dateOfArrival),
+                        parseISO(selectedShipment.arrivalDate),
                         "MMM dd, yyyy"
                       )}
                     </p>
