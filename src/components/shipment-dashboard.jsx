@@ -21,9 +21,9 @@ import {
   Edit,
   Pen,
   UserRound,
-  MapPin ,
+  MapPin,
   MapPinCheck,
-  HandCoins ,
+  HandCoins,
   Banknote,
   PlaneLanding,
   IndianRupee,
@@ -64,18 +64,26 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Sidebar } from "@/components/Sidebar"; // Import Sidebar
 import { cn } from "@/lib/utils"; // Ensure this import exists for className utility
 import ShipmentForm from "./Shipment-dialog";
+import { ClimbingBoxLoader } from "react-spinners";
+
+import { apiClient } from "@/lib/api-client";
+import {
+  UPDATE_SHIPMENT
+} from "@/utils/constant";
+import toast from "react-hot-toast";
 
 export function ShipmentDashboardComponent() {
   const [activeTab, setActiveTab] = useState("ongoing");
-  const [shipments, setShipments] = useState([
-  ]);
+  const [shipments, setShipments] = useState([]);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: "asc" });
   const [selectedShipment, setSelectedShipment] = useState(null);
   const [filterPaid, setFilterPaid] = useState(null);
   const [filterToday, setFilterToday] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Manage sidebar state
-  const [createShipmentOpen, setCreateShipmentOpen] = useState(false)
+  const [createShipmentOpen, setCreateShipmentOpen] = useState(false);
+  const [Loading, setLoading] = useState(true);
+
   const statusColors = {
     delivered: "bg-green-500",
     cancelled: "bg-red-500",
@@ -84,26 +92,69 @@ export function ShipmentDashboardComponent() {
     pending: "bg-yellow-500",
   };
 
-  const form = useForm({
-    defaultValues: {
-      name: "",
-      clientName: "",
-      origin: "",
-      destination: "",
-      paymentPending: 0,
-      dateOfDispatch: "",
-      dateOfArrival: "",
-      driverPayment: 0,
-    },
+  const [formData, setFormData] = useState({
+    departureDate: "",
+    arrivalDate: "",
+    status: "",
   });
 
-  const onSubmit = (data) => {
-    const newShipment = {
-      id: shipments.length + 1,
-      ...data,
-      status: "Pending",
-    };
-    setShipments([...shipments, newShipment]);
+  const handleInputChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.id]: e.target.value,
+    });
+  };
+
+  const handleStatusChange = (value) => {
+    setFormData({
+      ...formData,
+      status: value,
+    });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    const updatedShipmentData = {};
+    if (formData.departureDate) updatedShipmentData.departureDate = formData.departureDate;
+    if (formData.arrivalDate) updatedShipmentData.arrivalDate = formData.arrivalDate;
+    if (formData.status) updatedShipmentData.status = formData.status;
+
+    if (Object.keys(updatedShipmentData).length === 0) {
+      toast.error("Please provide at least one field to update.");
+      return;
+    }
+
+    try {
+      const response = await apiClient.put(
+        UPDATE_SHIPMENT.replace(":shipmentId", selectedShipment.shipmentId),
+        updatedShipmentData
+      );
+
+      if (response.status === 200) {
+        toast.success("Shipment updated successfully!");
+        setShipments((prevShipment) =>
+          prevShipment.map((shipment) =>
+            shipment.shipmentId === selectedShipment.shipmentId
+              ? { ...shipment, ...response.data}
+              : shipment
+          )
+        );
+
+        setSelectedShipment(null); // Close dialog
+        setFormData({
+          departureDate: "",
+          arrivalDate: "",
+          status: "",
+        })
+       
+      }
+    } catch (error) {
+      console.error("Error updating Shipment:", error);
+      toast.error("Failed to update Shipment.");
+    }
+
+    console.log(formData)
   };
 
   const closeShipment = (id) => {
@@ -151,143 +202,174 @@ export function ShipmentDashboardComponent() {
   const renderShipmentTable = (shipments) => (
     <div className="overflow-x-auto">
       <div className="overflow-x-auto">
-  <Table className="min-w-full table-auto hidden sm:table">
-    <TableHeader>
-      <TableRow>
-        <TableHead className="w-[100px]">Name</TableHead>
-        <TableHead>Client</TableHead>
-        <TableHead>Origin</TableHead>
-        <TableHead>Destination</TableHead>
-        <TableHead>Status</TableHead>
-        <TableHead>Payment</TableHead>
-        <TableHead>Driver Payment</TableHead>
-        <TableHead
-          className="cursor-pointer"
-          onClick={() => sortShipments("dateOfDispatch")}
-        >
-          Dispatch
-          {sortConfig.key === "dateOfDispatch" && (
-            <ArrowUpDown className="ml-2 h-4 w-4 inline" />
+        <div>
+          {Loading ? ( // Conditional rendering for loading state
+            <div className="flex justify-center items-center">
+              <ClimbingBoxLoader />
+            </div> // Display this when loading is true
+          ) : (
+            <Table className="min-w-full table-auto hidden sm:table">
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[100px]">Name</TableHead>
+                  <TableHead>Client</TableHead>
+                  <TableHead>Origin</TableHead>
+                  <TableHead>Destination</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Payment</TableHead>
+                  <TableHead>Driver Payment</TableHead>
+                  <TableHead
+                    className="cursor-pointer"
+                    onClick={() => sortShipments("dateOfDispatch")}
+                  >
+                    Dispatch
+                    {sortConfig.key === "dateOfDispatch" && (
+                      <ArrowUpDown className="ml-2 h-4 w-4 inline" />
+                    )}
+                  </TableHead>
+                  <TableHead
+                    className="cursor-pointer"
+                    onClick={() => sortShipments("dateOfArrival")}
+                  >
+                    Arrival
+                    {sortConfig.key === "dateOfArrival" && (
+                      <ArrowUpDown className="ml-2 h-4 w-4 inline" />
+                    )}
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {shipments.map((shipment) => (
+                  <TableRow
+                    key={shipment.id}
+                    className="cursor-pointer hover:bg-gray-100"
+                    onClick={() => setSelectedShipment(shipment)}
+                  >
+                    <TableCell className="font-medium text-left">
+                      {shipment.shipmentName}
+                    </TableCell>
+                    <TableCell className="text-left">
+                      {shipment.clientName}
+                    </TableCell>
+                    <TableCell className="text-left">
+                      {shipment.pickupLocation}
+                    </TableCell>
+                    <TableCell className="text-left">
+                      {shipment.deliveryLocation}
+                    </TableCell>
+                    <TableCell className="text-left">
+                      <Badge
+                        className={`${
+                          statusColors[shipment.status]
+                        } text-white`}
+                      >
+                        {shipment.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-left">
+                      ₹{shipment.paymentPending}
+                    </TableCell>
+                    <TableCell className="text-left">
+                      ₹{shipment.driverPayment}
+                    </TableCell>
+                    <TableCell className="text-left">
+                      {format(parseISO(shipment.departureDate), "MMM dd, yyyy")}
+                    </TableCell>
+                    <TableCell className="text-left">
+                      {format(parseISO(shipment.arrivalDate), "MMM dd, yyyy")}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           )}
-        </TableHead>
-        <TableHead
-          className="cursor-pointer"
-          onClick={() => sortShipments("dateOfArrival")}
-        >
-          Arrival
-          {sortConfig.key === "dateOfArrival" && (
-            <ArrowUpDown className="ml-2 h-4 w-4 inline" />
-          )}
-        </TableHead>
-      </TableRow>
-    </TableHeader>
-    <TableBody>
-      {shipments.map((shipment) => (
-        <TableRow
-          key={shipment.id}
-          className="cursor-pointer hover:bg-gray-100"
-          onClick={() => setSelectedShipment(shipment)}
-        >
-          <TableCell className="font-medium text-left">{shipment.shipmentName}</TableCell>
-          <TableCell className = "text-left">{shipment.clientName}</TableCell>
-          <TableCell className = "text-left">{shipment.pickupLocation}</TableCell>
-          <TableCell className = "text-left">{shipment.deliveryLocation}</TableCell>
-          <TableCell className = "text-left">
-            <Badge className={`${statusColors[shipment.status]} text-white`}>
-              {shipment.status}
-            </Badge>
-          </TableCell>
-          <TableCell className = "text-left">₹{shipment.paymentPending}</TableCell>
-          <TableCell className = "text-left">₹{shipment.driverPayment}</TableCell>
-          <TableCell className = "text-left">
-            {format(parseISO(shipment.departureDate), "MMM dd, yyyy")}
-          </TableCell>
-          <TableCell className = "text-left">
-            {format(parseISO(shipment.arrivalDate), "MMM dd, yyyy")}
-          </TableCell>
-        </TableRow>
-      ))}
-    </TableBody>
-  </Table>
+        </div>
 
-  {/* Mobile Card View */}
-  <div className="sm:hidden">
-  {shipments.map((shipment) => (
-    <div
-      key={shipment.id}
-      className="border rounded-lg shadow-lg mb-6 p-5 bg-white"
-      onClick={() => setSelectedShipment(shipment)}
-    >
-      <div className="font-semibold text-xl text-gray-800 mb-4">
-        {shipment.name}
+        {/* Mobile Card View */}
+        <div className="sm:hidden">
+          {shipments.map((shipment) => (
+            <div
+              key={shipment.id}
+              className="border rounded-lg shadow-lg mb-6 p-5 bg-white"
+              onClick={() => setSelectedShipment(shipment)}
+            >
+              <div className="font-semibold text-xl text-gray-800 mb-4">
+                {shipment.name}
+              </div>
+
+              <div className="text-gray-600 mb-4 flex items-center">
+                <span className="mr-2 ">
+                  <UserRound /> {/* Replace with actual client icon */}
+                </span>
+                <span className="text-gray-500 mr-2">Client:</span>{" "}
+                {shipment.clientName}
+              </div>
+
+              <div className="text-sm text-gray-700 mb-4 flex items-center">
+                <span className="mr-2 ">
+                  <MapPin /> {/* Replace with actual origin icon */}
+                </span>
+                <span className="font-semibold mr-2">Origin:</span>{" "}
+                {shipment.origin}
+              </div>
+
+              <div className="text-sm text-gray-700 mb-4 flex items-center">
+                <span className="mr-2">
+                  <MapPinCheck /> {/* Replace with actual destination icon */}
+                </span>
+                <span className="font-semibold mr-2">Destination:</span>{" "}
+                {shipment.destination}
+              </div>
+
+              <div className="text-sm text-gray-700 mb-4 flex items-center">
+                <span className="mr-2">
+                  <Truck />
+                </span>
+                <span className="font-semibold mr-2">Status:</span>{" "}
+                <Badge
+                  className={`${
+                    statusColors[shipment.status]
+                  } text-white px-2 py-1 rounded-md`}
+                >
+                  {shipment.status}
+                </Badge>
+              </div>
+
+              <div className="text-sm mb-4 flex items-center">
+                <span className="mr-2 text-gray-500">
+                  <HandCoins /> {/* Replace with actual payment icon */}
+                </span>
+                <span className="font-semibold mr-2">Payment:</span> ₹
+                {shipment.paymentPending}
+              </div>
+
+              <div className="text-sm mb-4 flex items-center">
+                <span className="mr-2 text-gray-500">
+                  <Banknote /> {/* Replace with actual driver payment icon */}
+                </span>
+                <span className="font-semibold mr-2">Driver Payment:</span> ₹
+                {shipment.driverPayment}
+              </div>
+
+              <div className="text-sm mb-4 flex items-center">
+                <span className="mr-2 text-gray-500">
+                  <Package /> {/* Replace with actual dispatch icon */}
+                </span>
+                <span className="font-semibold mr-2">Dispatch:</span>{" "}
+                {/* {format(parseISO(shipment.dateOfDispatch), "MMM dd, yyyy")} */}
+              </div>
+
+              <div className="text-sm flex items-center">
+                <span className="mr-2 text-gray-500">
+                  <PlaneLanding /> {/* Replace with actual arrival icon */}
+                </span>
+                <span className="font-semibold">Arrival:</span>{" "}
+                {/* {format(parseISO(shipment.dateOfArrival), "MMM dd, yyyy")} */}
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
-
-      <div className="text-gray-600 mb-4 flex items-center">
-        <span className="mr-2 ">
-          <UserRound /> {/* Replace with actual client icon */}
-        </span>
-        <span className="text-gray-500 mr-2">Client:</span> {shipment.clientName}
-      </div>
-
-      <div className="text-sm text-gray-700 mb-4 flex items-center">
-        <span className="mr-2 ">
-          <MapPin /> {/* Replace with actual origin icon */}
-        </span>
-        <span className="font-semibold mr-2">Origin:</span> {shipment.origin}
-      </div>
-
-      <div className="text-sm text-gray-700 mb-4 flex items-center">
-        <span className="mr-2">
-          <MapPinCheck /> {/* Replace with actual destination icon */}
-        </span>
-        <span className="font-semibold mr-2">Destination:</span> {shipment.destination}
-      </div>
-
-      <div className="text-sm text-gray-700 mb-4 flex items-center">
-        <span className="mr-2">
-        <Truck />
-        </span>
-        <span className="font-semibold mr-2">Status:</span>{" "}
-        <Badge className={`${statusColors[shipment.status]} text-white px-2 py-1 rounded-md`}>
-          {shipment.status}
-        </Badge>
-      </div>
-
-      <div className="text-sm mb-4 flex items-center">
-        <span className="mr-2 text-gray-500">
-          <HandCoins /> {/* Replace with actual payment icon */}
-        </span>
-        <span className="font-semibold mr-2">Payment:</span> ₹{shipment.paymentPending}
-      </div>
-
-      <div className="text-sm mb-4 flex items-center">
-        <span className="mr-2 text-gray-500">
-          <Banknote /> {/* Replace with actual driver payment icon */}
-        </span>
-        <span className="font-semibold mr-2">Driver Payment:</span> ₹{shipment.driverPayment}
-      </div>
-
-      <div className="text-sm mb-4 flex items-center">
-        <span className="mr-2 text-gray-500">
-          <Package /> {/* Replace with actual dispatch icon */}
-        </span>
-        <span className="font-semibold mr-2">Dispatch:</span>{" "}
-        {/* {format(parseISO(shipment.dateOfDispatch), "MMM dd, yyyy")} */}
-      </div>
-
-      <div className="text-sm flex items-center">
-        <span className="mr-2 text-gray-500">
-          <PlaneLanding /> {/* Replace with actual arrival icon */}
-        </span>
-        <span className="font-semibold">Arrival:</span>{" "}
-        {/* {format(parseISO(shipment.dateOfArrival), "MMM dd, yyyy")} */}
-      </div>
-    </div>
-  ))}
-</div>
-
-</div>
-
     </div>
   );
 
@@ -339,14 +421,20 @@ export function ShipmentDashboardComponent() {
                   <span className="sm:hidden">All</span>
                 </TabsTrigger>
               </TabsList>
-                  <Button onClick={()=>{
-                      setCreateShipmentOpen(true);
-                  }}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    New Shipment
-                  </Button>
-                  <ShipmentForm createShipmentOpen={createShipmentOpen} setCreateShipmentOpen={setCreateShipmentOpen} setShipments={setShipments}></ShipmentForm>
-             
+              <Button
+                onClick={() => {
+                  setCreateShipmentOpen(true);
+                }}
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                New Shipment
+              </Button>
+              <ShipmentForm
+                createShipmentOpen={createShipmentOpen}
+                setCreateShipmentOpen={setCreateShipmentOpen}
+                setShipments={setShipments}
+                setLoading={setLoading}
+              ></ShipmentForm>
             </div>
             <Card>
               <CardHeader>
@@ -481,84 +569,101 @@ export function ShipmentDashboardComponent() {
                   {activeTab === "all" && (
                     <Dialog>
                       <DialogTrigger asChild>
-                        <Button className="bg-black hover:bg-gray-800 text-white">
+                        <Button
+                          variant="default"
+                          className="bg-primary hover:bg-primary/90"
+                        >
                           <Pen className="mr-2 h-4 w-4" /> Update Shipment
                         </Button>
                       </DialogTrigger>
-
                       <DialogContent className="sm:max-w-[425px]">
                         <DialogHeader>
-                          <DialogTitle>Update Shipment</DialogTitle>
-                          <DialogDescription>
-                            Enter the details you want to update. Click save
+                          <DialogTitle className="text-lg font-semibold">
+                            Update Shipment
+                          </DialogTitle>
+                          <DialogDescription className="text-sm text-muted-foreground">
+                            Enter the details you want to update. <br/>Click save
                             when you're done.
                           </DialogDescription>
                         </DialogHeader>
-
-                        <form className="grid gap-4 py-4">
+                        <form
+                          onSubmit={handleSubmit}
+                          className="space-y-6 py-4"
+                        >
                           <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="model" className="text-right">
-                              Payment Pending
-                            </Label>
-                            <Input
-                              id="model"
-                              className="col-span-3"
-                              placeholder="Payment Pending"
-                            />
-                          </div>
-
-                          <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="capacity" className="text-right">
+                            <Label
+                              htmlFor="departureDate"
+                              className="text-right text-sm font-medium"
+                            >
                               Dispatch Date
                             </Label>
                             <Input
-                              id="date"
+                              id="departureDate"
                               type="date"
                               className="col-span-3"
-                              // You can add additional props here if needed
+                              value={formData.departureDate}
+                              onChange={handleInputChange}
+                              
+                              
                             />
                           </div>
-
                           <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="capacity" className="text-right">
+                            <Label
+                              htmlFor="arrivalDate"
+                              className="text-right text-sm font-medium"
+                            >
                               Arrival Date
                             </Label>
                             <Input
-                              id="date"
+                              id="arrivalDate"
                               type="date"
                               className="col-span-3"
-                              // You can add additional props here if needed
+                              value={formData.arrivalDate}
+                              onChange={handleInputChange}
+                              
                             />
                           </div>
-
                           <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="status" className="text-right">
+                            <Label
+                              htmlFor="status"
+                              className="text-right text-sm font-medium"
+                            >
                               Status
                             </Label>
-                            <Select>
+                            <Select
+                              onValueChange={handleStatusChange}
+                              value={formData.status}
+                              
+                            >
                               <SelectTrigger className="col-span-3">
                                 <SelectValue placeholder="Select status" />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="available">
-                                  Pending
+                                <SelectItem value="pending">Pending</SelectItem>
+                                <SelectItem value="cancelled">
+                                  Cancelled
                                 </SelectItem>
-                                <SelectItem value="intransit">
-                                  In Transit
-                                </SelectItem>
-                                <SelectItem value="maintenance">
+                                <SelectItem value="delivered">
                                   Delivered
                                 </SelectItem>
                               </SelectContent>
                             </Select>
                           </div>
-
-                          <Button
-                            type="submit"
-                            className="bg-blue-500 hover:bg-blue-600 text-white"
-                          >
-                            Save Truck
-                          </Button>
+                          <div className="flex justify-end space-x-4 pt-4">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              onClick={() => setOpen(false)}
+                            >
+                              Cancel
+                            </Button>
+                            <Button
+                              type="submit"
+                              className="bg-primary hover:bg-primary/90"
+                            >
+                              Save Changes
+                            </Button>
+                          </div>
                         </form>
                       </DialogContent>
                     </Dialog>

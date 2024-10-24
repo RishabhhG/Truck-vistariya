@@ -50,3 +50,7 @@ export const GET_BILL_BY_PAYMENT_STATUS = `${BILLING_ROUTE}/status/:status`;
 export const GET_BILL_BY_CLIENT = `${BILLING_ROUTE}/client/:clientId`;
 export const BILL_OVERDUE = `${BILLING_ROUTE}/overdue`;
 export const PAID_BILL = `${BILLING_ROUTE}/:id/mark-paid`;
+
+
+export const DASHBOARD_ROUTE = "api/dashboard";
+export const GET_DASHBOARD = `${DASHBOARD_ROUTE}/`
