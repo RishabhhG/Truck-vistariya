@@ -29,6 +29,7 @@ export default function CreateShipmentModal({
   createShipmentOpen,
   setCreateShipmentOpen,
   setShipments,
+  setLoading,
 }) {
   const [formData, setFormData] = useState({
     shipmentName: "",
@@ -77,12 +78,21 @@ export default function CreateShipmentModal({
 
   useEffect(() => {
     async function fetchShipments() {
-      const response = await apiClient.get(GET_ALL_SHIPMENTS);
-      console.log("shipment", response)
-      setShipments(response.data); // Assuming setShipments is provided as a prop
+      try {
+        const response = await apiClient.get(GET_ALL_SHIPMENTS);
+        console.log("shipment", response);
+        setShipments(response.data); // Assuming setShipments is provided as a prop
+      } catch (error) {
+        console.error("Error fetching shipments:", error);
+      }
+      finally {
+        setLoading(false); // Stop loading when data fetching completes
+      }
     }
+  
     fetchShipments();
   }, []);
+  
 
   const onClose = () => {
     setCreateShipmentOpen(false);
