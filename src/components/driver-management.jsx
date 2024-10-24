@@ -191,11 +191,12 @@ export function DriverManagementComponent() {
       );
 
       if (response.status === 200) {
+        console.log(response.data);
         toast.success("Driver updated successfully!");
         setDrivers((prevDriver) =>
           prevDriver.map((driver) =>
             driver.driverId === selectedDriver.driverId
-              ? { ...driver, ...response.data.driver }
+              ? { ...driver, ...response.data }
               : driver
           )
         );
